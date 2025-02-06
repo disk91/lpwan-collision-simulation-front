@@ -12,13 +12,14 @@ export default {
   data() {
     return {
       waterfall: null,
-      width: 800,
+      width: 400,
       height: 400,
       updateInterval: null,
       dataObj: null,
+      dataResolution: 8, // Définir la résolution des données à 8
     };
   },
-  mounted() { 
+  mounted() {
     this.initWaterfall();
     this.startUpdating();
   },
@@ -38,9 +39,6 @@ export default {
       this.waterfall = new Waterfall(this.dataObj, this.width, this.height, direction, options);
       canvas.width = this.width;
       canvas.height = this.height;
-      // Pas besoin de dessiner ici initialement, la mise à jour le fera
-      // const ctx = canvas.getContext('2d');
-      // ctx.drawImage(this.waterfall.offScreenCvs, 0, 0);
 
       this.waterfall.start();
     },
@@ -51,11 +49,29 @@ export default {
       const bufferAry = [];
       bufferAry[0] = new Uint8Array(this.width);
       bufferAry[1] = new Uint8Array(this.width);
+      const resolution = this.dataResolution; // Récupérer la résolution définie
+      const stretchFactor = Math.ceil(this.width / resolution); // Facteur d'étirement
 
       const genDynamicData = () => {
-        for (let i = 0; i < this.width; i++) {
-          bufferAry[1][i] = Math.floor(Math.random() * 256);
+        const smallBuffer = new Uint8Array(resolution); // Buffer de taille réduite
+
+        // Remplir le petit buffer de données aléatoires
+        for (let i = 0; i < resolution; i++) {
+          smallBuffer[i] = Math.floor(Math.random() * 256);
         }
+
+        // Étirer le petit buffer pour remplir bufferAry[1]
+        for (let i = 0; i < resolution; i++) {
+          const value = smallBuffer[i];
+          for (let j = 0; j < stretchFactor; j++) {
+            const index = i * stretchFactor + j;
+            if (index < this.width) { // Vérifier pour ne pas dépasser la largeur
+              bufferAry[1][index] = value;
+            }
+          }
+        }
+
+
         let tmpBuf = bufferAry[0];
         bufferAry[0] = bufferAry[1];
         bufferAry[1] = tmpBuf;
@@ -69,10 +85,10 @@ export default {
     startUpdating() {
       this.updateInterval = setInterval(() => {
         this.waterfall.newLine();
-        this.redrawCanvas(); // Ajout de la ligne pour redessiner
+        this.redrawCanvas();
       }, 10);
     },
-    redrawCanvas() { // Nouvelle méthode pour redessiner le canvas
+    redrawCanvas() {
       const canvas = this.$refs.waterfallCanvas;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(this.waterfall.offScreenCvs, 0, 0);
