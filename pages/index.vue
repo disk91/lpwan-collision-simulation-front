@@ -1,6 +1,7 @@
 <template>
-  <WebSocketSim></WebSocketSim>
+  <SimulationMainControl/>
   <SpectrogramViewer/>
+  <WebSocketMessages/>
 </template>
 
 <style scoped>

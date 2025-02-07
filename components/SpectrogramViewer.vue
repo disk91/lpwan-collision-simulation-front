@@ -4,97 +4,116 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
+import { useWebSocketHandler } from '@/composables/useWebSocket';
 import { Waterfall } from '~/public/libs/Spectrogram-2v01.js';
 
-export default {
-  name: 'SpectrogramViewer',
-  data() {
-    return {
-      waterfall: null,
-      width: 400,
-      height: 400,
-      updateInterval: null,
-      dataObj: null,
-      dataResolution: 8, // Définir la résolution des données à 8
-    };
-  },
-  mounted() {
-    this.initWaterfall();
-    this.startUpdating();
-  },
-  beforeUnmount() {
-    clearInterval(this.updateInterval);
-  },
-  methods: {
-    initWaterfall() {
-      const canvas = this.$refs.waterfallCanvas;
-      const direction = 'down';
-      const options = {
-        lineRate: 100,
-        colormap: this.generateColormap(),
-      };
+const { status } = useWebSocketHandler();
 
-      this.dataObj = this.getDynamicDataBuffer();
-      this.waterfall = new Waterfall(this.dataObj, this.width, this.height, direction, options);
-      canvas.width = this.width;
-      canvas.height = this.height;
+const waterfallCanvas = ref(null);
+const waterfall = ref(null);
+const width = 400;
+const height = 400;
+const updateInterval = ref(null);
+const dataResolution = 8;
+let dataObj = null;
 
-      this.waterfall.start();
-    },
-    generateColormap() {
-      return Array.from({ length: 256 }, (_, i) => [i, 0, 255 - i, 255]);
-    },
-    getDynamicDataBuffer() {
-      const bufferAry = [];
-      bufferAry[0] = new Uint8Array(this.width);
-      bufferAry[1] = new Uint8Array(this.width);
-      const resolution = this.dataResolution; // Récupérer la résolution définie
-      const stretchFactor = Math.ceil(this.width / resolution); // Facteur d'étirement
+const initWaterfall = () => {
+  if (!waterfallCanvas.value) return;
 
-      const genDynamicData = () => {
-        const smallBuffer = new Uint8Array(resolution); // Buffer de taille réduite
+  const direction = 'down';
+  const options = {
+    lineRate: 100,
+    colormap: generateColormap(),
+  };
 
-        // Remplir le petit buffer de données aléatoires
-        for (let i = 0; i < resolution; i++) {
-          smallBuffer[i] = Math.floor(Math.random() * 256);
-        }
+  dataObj = getDynamicDataBuffer();
+  waterfall.value = new Waterfall(dataObj, width, height, direction, options);
+  waterfallCanvas.value.width = width;
+  waterfallCanvas.value.height = height;
 
-        // Étirer le petit buffer pour remplir bufferAry[1]
-        for (let i = 0; i < resolution; i++) {
-          const value = smallBuffer[i];
-          for (let j = 0; j < stretchFactor; j++) {
-            const index = i * stretchFactor + j;
-            if (index < this.width) { // Vérifier pour ne pas dépasser la largeur
-              bufferAry[1][index] = value;
-            }
-          }
-        }
-
-
-        let tmpBuf = bufferAry[0];
-        bufferAry[0] = bufferAry[1];
-        bufferAry[1] = tmpBuf;
-
-        setTimeout(genDynamicData, 100);
-      };
-
-      genDynamicData();
-      return { buffer: bufferAry[0] };
-    },
-    startUpdating() {
-      this.updateInterval = setInterval(() => {
-        this.waterfall.newLine();
-        this.redrawCanvas();
-      }, 10);
-    },
-    redrawCanvas() {
-      const canvas = this.$refs.waterfallCanvas;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(this.waterfall.offScreenCvs, 0, 0);
-    },
-  },
+  waterfall.value.start();
 };
+
+const generateColormap = () => {
+  return Array.from({ length: 256 }, (_, i) => [i, 0, 255 - i, 255]);
+};
+
+const getDynamicDataBuffer = () => {
+  const bufferAry = [];
+  bufferAry[0] = new Uint8Array(width);
+  bufferAry[1] = new Uint8Array(width);
+  const resolution = dataResolution;
+  const stretchFactor = Math.ceil(width / resolution);
+
+  const genDynamicData = () => {
+    const smallBuffer = new Uint8Array(resolution);
+
+    for (let i = 0; i < resolution; i++) {
+      smallBuffer[i] = Math.floor(Math.random() * 256);
+    }
+
+    for (let i = 0; i < resolution; i++) {
+      const value = smallBuffer[i];
+      for (let j = 0; j < stretchFactor; j++) {
+        const index = i * stretchFactor + j;
+        if (index < width) {
+          bufferAry[1][index] = value;
+        }
+      }
+    }
+
+    let tmpBuf = bufferAry[0];
+    bufferAry[0] = bufferAry[1];
+    bufferAry[1] = tmpBuf;
+
+    setTimeout(genDynamicData, 100);
+  };
+
+  genDynamicData();
+  return { buffer: bufferAry[0] };
+};
+
+const startUpdating = () => {
+  console.log("Démarrage du spectrogramme")
+  if (updateInterval.value) return;
+  updateInterval.value = setInterval(() => {
+    waterfall.value.newLine();
+    redrawCanvas();
+  }, 10);
+};
+
+const stopUpdating = () => {
+  if (updateInterval.value) {
+    clearInterval(updateInterval.value);
+    updateInterval.value = null;
+  }
+};
+
+const redrawCanvas = () => {
+  if (!waterfallCanvas.value) return;
+  const ctx = waterfallCanvas.value.getContext('2d');
+  ctx.drawImage(waterfall.value.offScreenCvs, 0, 0);
+};
+
+watch(status, (newStatus) => {
+  if (newStatus === 'OPEN') {
+    console.log("Démarrage du spectrogramme")
+    startUpdating();
+  } else {
+    console.log("Arrêt du spectrogramme")
+    stopUpdating();
+  }
+});
+
+onMounted(() => {
+  initWaterfall();
+});
+
+onBeforeUnmount(() => {
+  stopUpdating();
+});
 </script>
 
 <style scoped>
