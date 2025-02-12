@@ -1,7 +1,13 @@
+<script setup lang="ts">
+import FrameModels from '~/components/FrameModels.vue';
+import ScatterPlot from '~/components/ScatterPlot.vue';
+
+</script>
+
 <template>
   <SimulationMainControl/>
-  <SpectrogramViewer/>
-  <WebSocketMessages/>
+  <ScatterPlot/>
+  <FrameModels/>
 </template>
 
 <style scoped>

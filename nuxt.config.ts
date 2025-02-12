@@ -5,5 +5,10 @@ export default defineNuxtConfig({
   modules: [
     '@vueuse/nuxt',
     '@nuxt/ui'
-  ]
+  ],
+  runtimeConfig: {
+    public: {
+      baseURL: process.env.API_BASE_URL || 'https://api.example.com'
+    }
+  }
 })
