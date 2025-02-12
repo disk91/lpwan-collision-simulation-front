@@ -71,5 +71,26 @@ export const useSimulationAPI = () => {
     }
   }
 
-  return { startSimulation, stopSimulation, getSimulationStatus, getSimulationResults }
+  const pauseSimulation = async (simulationId: string) => {
+    try {
+      const response = await fetch(`${baseURL}/simulations/${simulationId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'pause' })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(`Erreur lors de la pause: ${response.status} ${response.statusText} - ${errorData?.message || 'Détails non disponibles'}`)
+      }
+
+      return await response.json() // Retourne l'objet de simulation modifié
+
+    } catch (error) {
+      console.error("Erreur dans pauseSimulation :", error)
+      throw error
+    }
+  }
+
+  return { startSimulation, stopSimulation, getSimulationStatus, getSimulationResults, pauseSimulation}
 }

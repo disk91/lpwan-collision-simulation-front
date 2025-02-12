@@ -1,48 +1,19 @@
-<script setup lang="ts">
-import FrameModels from '~/components/FrameModels.vue';
-import ScatterPlot from '~/components/ScatterPlot.vue';
-
-</script>
-
 <template>
-  <SimulationMainControl/>
-  <ScatterPlot/>
-  <FrameModels/>
+  <div class="simulation-container">
+    <!-- Affiche le graphique de simulation -->
+    <ScatterPlot />
+    <!-- Vous pouvez intégrer ici d'éventuels contrôles superposés (OverlayControls) si besoin -->
+  </div>
 </template>
 
+<script setup lang="ts">
+import ScatterPlot from '~/components/ScatterPlot.vue'
+</script>
+
 <style scoped>
-.container {
-  text-align: center;
-  padding: 20px;
-}
-
-p {
-  font-size: 18px;
-}
-
-.messages {
-  margin-top: 20px;
-  text-align: left;
-  padding: 10px;
-  background: #f8f9fa;
-  border-radius: 5px;
-}
-
-.messages h2 {
-  font-size: 18px;
-}
-
-.messages ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-.messages li {
-  padding: 5px;
-  border-bottom: 1px solid #ddd;
-}
-
-.messages li:last-child {
-  border-bottom: none;
+.simulation-container {
+  position: relative;
+  height: 100%;
+  width: 100%;
 }
 </style>

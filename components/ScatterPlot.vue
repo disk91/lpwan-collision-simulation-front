@@ -1,9 +1,9 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
 import * as echarts from "echarts";
 
-const chartRef = ref(null);
-let chartInstance = null;
+const chartRef = ref<HTMLElement | null>(null);
+let chartInstance: echarts.ECharts | null = null;
 const data = ref([]);
 const windowSize = 20; // Fenêtre fixe de 20 secondes
 let currentTime = 0;
@@ -32,7 +32,7 @@ const updateChart = () => {
   if (!chartInstance) return;
 
   chartInstance.setOption({
-    title: { text: "Utilisation des bandes de fréquences dans le temps" },
+    title: { text: "Résultats" },
     tooltip: { trigger: "item" },
     xAxis: {
       type: "value",
@@ -48,9 +48,6 @@ const updateChart = () => {
       max: 1000,
       animation: true,
     },
-    // Configuration du zoom :
-    // - Zoom horizontal (axe X) activé par défaut, mais sera désactivé lorsque SHIFT est enfoncée
-    // - Zoom vertical (axe Y) uniquement activé lorsque SHIFT est enfoncée
     dataZoom: [
       { type: "inside", xAxisIndex: 0, zoomOnMouseWheel: true },
       { type: "inside", yAxisIndex: 0, zoomOnMouseWheel: "shift" },
@@ -84,7 +81,7 @@ const updateChart = () => {
 };
 
 // Met à jour uniquement la configuration du zoom (dataZoom) pour l'axe X
-const updateDataZoom = (xZoomOnWheel) => {
+const updateDataZoom = (xZoomOnWheel: boolean) => {
   if (!chartInstance) return;
 
   chartInstance.setOption({
@@ -96,14 +93,14 @@ const updateDataZoom = (xZoomOnWheel) => {
 };
 
 // Désactive le zoom sur l'axe X lorsque SHIFT est enfoncée
-const handleKeyDown = (event) => {
+const handleKeyDown = (event: KeyboardEvent) => {
   if (event.key === "Shift") {
     updateDataZoom(false);
   }
 };
 
 // Réactive le zoom sur l'axe X lorsque SHIFT est relâchée
-const handleKeyUp = (event) => {
+const handleKeyUp = (event: KeyboardEvent) => {
   if (event.key === "Shift") {
     updateDataZoom(true);
   }
@@ -111,24 +108,45 @@ const handleKeyUp = (event) => {
 
 // Initialise le graphique
 const initChart = () => {
-  chartInstance = echarts.init(chartRef.value);
-  updateChart();
+  if (chartRef.value) {
+    chartInstance = echarts.init(chartRef.value);
+    updateChart();
+  }
+};
+
+// Fonction pour redimensionner le graphique en cas de changement de taille
+const resizeChart = () => {
+  if (chartInstance) {
+    chartInstance.resize();
+  }
 };
 
 onMounted(() => {
   initChart();
   addBands(); // Ajoute toutes les bandes d'un coup
+
   window.addEventListener("keydown", handleKeyDown);
   window.addEventListener("keyup", handleKeyUp);
+  window.addEventListener("resize", resizeChart);
 });
 
 onUnmounted(() => {
   if (chartInstance) chartInstance.dispose();
   window.removeEventListener("keydown", handleKeyDown);
   window.removeEventListener("keyup", handleKeyUp);
+  window.removeEventListener("resize", resizeChart);
 });
 </script>
 
 <template>
-  <div ref="chartRef" style="width: 800px; height: 500px"></div>
+  <!-- Utilise une classe CSS pour définir le style du conteneur -->
+  <div ref="chartRef" class="chart-container"></div>
 </template>
+
+<style scoped>
+/* Le conteneur prend 100% de la largeur et de la hauteur de son parent */
+.chart-container {
+  width: 100%;
+  height: 100%;
+}
+</style>
