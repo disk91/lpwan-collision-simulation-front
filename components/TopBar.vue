@@ -8,22 +8,22 @@
 
     <!-- Partie centrale : boutons de contrôle et indicateur d'état -->
     <div class="topbar-center">
-      <button @click="startSimulation" class="control-btn">Démarrer</button>
-      <button @click="" class="control-btn">Arrêter</button> <!-- stopSimulation() -->
-      <button @click="" class="control-btn">Pause</button> <!-- pauseSimulation -->
-      <span class="simulation-status">Running ?</span> <!-- {{ simulationStatus }} -->
+      <UButtonGroup>
+        <UButton @click="startSimulation" class="control-btn" icon="mdi:play" />
+        <UButton @click="" class="control-btn" icon="mdi:stop" color="red" /> <!-- stopSimulation() -->
+        <UButton @click="" class="control-btn" icon="mdi:pause" color="orange" /> <!-- pauseSimulation -->
+        <UButton @click="" class="control-btn" label="Running ?" color="white" /> <!-- {{ simulationStatus }} -->
+      </UButtonGroup>
+
     </div>
 
     <!-- Partie droite : bouton mode sombre et (optionnel) bouton hamburger pour mobile -->
     <div class="topbar-right">
-      <button @click="toggleDarkMode" class="darkmode-btn">
-        <span v-if="isDarkMode">🌙</span>
-        <span v-else>☀️</span>
-      </button>
+      <UButton @click="toggleDarkMode" class="darkmode-btn" :icon="isDarkMode ? 'mdi:weather-night' : 'mdi:weather-sunny'" />
       <!-- Bouton hamburger (visible uniquement sur mobile via CSS) -->
       <button class="hamburger-btn" @click="toggleSidebar">
         <svg width="24" height="24" viewBox="0 0 24 24">
-          <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
         </svg>
       </button>
     </div>
@@ -31,6 +31,7 @@
 </template>
 
 <script setup lang="ts">
+import { UButton } from '#components'
 import { ref } from 'vue'
 import { useSimulationAPI } from '~/composables/useSimulationAPI'
 //import { useSimulationState } from '~/composables/useSimulationState'
@@ -59,7 +60,6 @@ function toggleSidebar() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #fff;
   padding: 0.5rem 1rem;
   border-bottom: 1px solid #ddd;
 }
@@ -85,19 +85,6 @@ function toggleSidebar() {
   gap: 0.5rem;
 }
 
-.control-btn {
-  padding: 0.3rem 0.8rem;
-  border: none;
-  background: #007bff;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.control-btn:hover {
-  background: #0056b3;
-}
-
 .simulation-status {
   margin-left: 1rem;
   font-weight: bold;
@@ -109,18 +96,12 @@ function toggleSidebar() {
   gap: 0.5rem;
 }
 
-.darkmode-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1.5rem;
-}
-
 .hamburger-btn {
   background: none;
   border: none;
   cursor: pointer;
-  display: none; /* Affiché uniquement sur mobile */
+  display: none;
+  /* Affiché uniquement sur mobile */
 }
 
 @media (max-width: 768px) {

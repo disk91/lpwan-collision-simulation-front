@@ -32,7 +32,6 @@ const updateChart = () => {
   if (!chartInstance) return;
 
   chartInstance.setOption({
-    title: { text: "Résultats" },
     tooltip: { trigger: "item" },
     xAxis: {
       type: "value",
