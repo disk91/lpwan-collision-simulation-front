@@ -8,7 +8,7 @@ export default defineNuxtConfig({
   ],
   runtimeConfig: {
     public: {
-      baseURL: process.env.API_BASE_URL || 'https://api.example.com'
+      baseURL: process.env.API_BASE_URL || 'http://192.168.1.34:8080'
     }
   }
 })

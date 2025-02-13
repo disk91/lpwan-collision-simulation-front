@@ -2,95 +2,91 @@ import { useRuntimeConfig } from '#imports'
 
 export const useSimulationAPI = () => {
   const config = useRuntimeConfig()
-  const baseURL = config.public.apiBaseURL
+  const baseURL = config.public.baseURL
 
-  const startSimulation = async (params: any) => {
+  interface FrameModel {
+    channel: number;   // Représentation de la fréquence utilisée par la trame
+    group: number;     // Groupe auquel appartient la trame
+
+    usStart: number;   // Début de la trame en microsecondes
+    usEnd: number;     // Fin de la trame en microsecondes
+
+    collision: boolean;  // Indique une collision locale (un fragment)
+    lost: boolean;       // Indique une collision globale (perte de la trame)
+
+    next?: FrameModel | null;  // Chaînage vers la trame suivante
+    //head?: FrameModel | null;  // Référence vers la première trame de la chaîne
+    first: boolean;            // Indique si c'est la première trame de la chaîne
+  }
+
+  interface SimulationModel {
+    simulationRunning: boolean;  // Indique si la simulation est en cours
+    simulationMessagePerSecond: number;  // Nombre de messages simulés par seconde
+
+    MiotyModelRun: boolean;  // Indique si le modèle Mioty est actif
+    MiotyFrames: FrameModel[];  // Liste des trames Mioty
+
+    SigfoxModelRun: boolean;  // Indique si le modèle Sigfox est actif
+    SigfoxFrames: FrameModel[];  // Liste des trames Sigfox
+
+    LoRaWanRun: boolean;  // Indique si le modèle LoRaWAN est actif
+    LoRaWanFrames: FrameModel[];  // Liste des trames LoRaWAN
+  }
+
+  const createSimulation = async () => {
     try {
-      const response = await fetch(`${baseURL}/simulations`, {
+      const response = await fetch(`${baseURL}/api/new`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(params)
-      })
-      if (!response.ok) {
-        const errorData = await response.json() // Essayer de récupérer les détails de l'erreur du serveur
-        throw new Error(`Erreur lors du démarrage: ${response.status} ${response.statusText} - ${errorData?.message || 'Détails non disponibles'}`)
-      }
-      return await response.json()
-    } catch (error) {
-      console.error("Erreur dans startSimulation :", error)
-      throw error
-    }
-  }
-
-  const stopSimulation = async (simulationId: string) => {
-    try {
-      const response = await fetch(`${baseURL}/simulations/${simulationId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'stop' })
+        headers: { 'Content-Type': 'application/json' }
       })
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(`Erreur lors de l'arrêt: ${response.status} ${response.statusText} - ${errorData?.message || 'Détails non disponibles'}`)
+        throw new Error(`Erreur création simulation: ${response.status} ${response.statusText} - ${errorData?.message || 'Détails non disponibles'}`)
       }
 
-      return await response.json() // Retourne l'objet de simulation modifié
-
+      return await response.json() // Retourne { id: identifiant }
     } catch (error) {
-      console.error("Erreur dans stopSimulation :", error)
+      console.error("Erreur dans createSimulation :", error)
       throw error
     }
   }
 
-  const getSimulationStatus = async (simulationId: string) => {
+  const startSimulation = async (simulationId: number) => {
     try {
-      const response = await fetch(`${baseURL}/simulations/${simulationId}/status`)
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(`Erreur statut: ${response.status} ${response.statusText} - ${errorData?.message || 'Détails non disponibles'}`)
+      if (typeof simulationId !== 'number' && typeof simulationId !== 'string') {
+        throw new Error('simulationId doit être un nombre ou une chaîne');
       }
-      return await response.json()
+  
+      const response = await fetch(`${baseURL}/api/run/${simulationId}`);
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Erreur lancement: ${response.status} ${response.statusText} - ${errorData?.message || 'Détails non disponibles'}`);
+      }
+  
+      return await response.json();
     } catch (error) {
-      console.error("Erreur dans getSimulationStatus :", error)
-      throw error
+      console.error("Erreur dans startSimulation :", error);
+      throw error;
     }
   }
 
-  const getSimulationResults = async (simulationId: string) => {
+  const getSimulationResults = async (simulationId: number) => {
     try {
-      const response = await fetch(`${baseURL}/simulations/${simulationId}/results`)
+      const response = await fetch(`${baseURL}/api/values/${simulationId}`)
+
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(`Erreur résultats: ${response.status} ${response.statusText} - ${errorData?.message || 'Détails non disponibles'}`)
+        throw new Error(`Erreur récupération résultats: ${response.status} ${response.statusText} - ${errorData?.message || 'Détails non disponibles'}`)
       }
-      return await response.json()
+
+      return await response.json() // Retourne un objet SimulationModel
     } catch (error) {
       console.error("Erreur dans getSimulationResults :", error)
       throw error
     }
   }
 
-  const pauseSimulation = async (simulationId: string) => {
-    try {
-      const response = await fetch(`${baseURL}/simulations/${simulationId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'pause' })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(`Erreur lors de la pause: ${response.status} ${response.statusText} - ${errorData?.message || 'Détails non disponibles'}`)
-      }
-
-      return await response.json() // Retourne l'objet de simulation modifié
-
-    } catch (error) {
-      console.error("Erreur dans pauseSimulation :", error)
-      throw error
-    }
-  }
-
-  return { startSimulation, stopSimulation, getSimulationStatus, getSimulationResults, pauseSimulation}
+  return { createSimulation, startSimulation, getSimulationResults }
 }

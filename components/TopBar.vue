@@ -9,8 +9,8 @@
     <!-- Partie centrale : boutons de contrôle et indicateur d'état -->
     <div class="topbar-center">
       <UButtonGroup>
-        <UButton @click="startSimulation" class="control-btn" icon="mdi:play" />
-        <UButton @click="" class="control-btn" icon="mdi:stop" color="red" /> <!-- stopSimulation() -->
+        <UButton @click="createSimulation_p()" class="control-btn" icon="mdi:play" />
+        <UButton @click="getSimulationResults_p()" class="control-btn" icon="mdi:stop" color="red" /> <!-- stopSimulation() -->
         <UButton @click="" class="control-btn" icon="mdi:pause" color="orange" /> <!-- pauseSimulation -->
         <UButton @click="" class="control-btn" label="Running ?" color="white" /> <!-- {{ simulationStatus }} -->
       </UButtonGroup>
@@ -37,7 +37,7 @@ import { useSimulationAPI } from '~/composables/useSimulationAPI'
 //import { useSimulationState } from '~/composables/useSimulationState'
 
 // Récupération des fonctions d'API pour le contrôle de la simulation
-const { startSimulation, stopSimulation, pauseSimulation } = useSimulationAPI()
+const { createSimulation, startSimulation, getSimulationResults } = useSimulationAPI()
 // Récupération de l'état de la simulation
 //const simulationState = useSimulationState()
 //const simulationStatus = simulationState.simulationStatus
@@ -52,6 +52,25 @@ function toggleDarkMode() {
 // Pour le menu hamburger, vous pouvez soit émettre un événement vers le layout, soit gérer une variable globale
 function toggleSidebar() {
   console.log('Toggle sidebar (mobile)')
+}
+
+let simulationID: number = 0
+function createSimulation_p() {
+  createSimulation().then(({ id }) => {
+    simulationID = id
+    console.log('Simulation created with ID:', id)
+    startSimulation(simulationID)
+  }).catch(error => {
+    console.error('Failed to create simulation:', error)
+  })
+}
+
+function getSimulationResults_p() {
+  getSimulationResults(simulationID).then(results => {
+    console.log('Simulation results:', results)
+  }).catch(error => {
+    console.error('Failed to get simulation results:', error)
+  })
 }
 </script>
 
