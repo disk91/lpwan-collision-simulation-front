@@ -3,6 +3,7 @@ package com.projetzz2.lpwan_colision_simulation.Controller;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +14,7 @@ import com.projetzz2.lpwan_colision_simulation.Simulation.SimulationConnecter;
 
 @RestController
 @RequestMapping("/api")
+@CrossOrigin(origins = "http://localhost:3000")
 public class SimulationServerController {
     
     private Map<Integer, SimulationConnecter> allSimulations = new HashMap<>();
@@ -26,7 +28,7 @@ public class SimulationServerController {
     @GetMapping("/run/{id}")
     public String runSimulation(@PathVariable int id){
         allSimulations.get(id).simulationRun();
-        return "Running simulation: " + id;
+        return "{\n  \"Running simulation\": " + id + "\n}";
     }
 
     @PostMapping("/new")
@@ -34,7 +36,7 @@ public class SimulationServerController {
         allSimulations.put(lastId, new SimulationConnecter());
         lastId++;
 
-        return "{\n  id: " + (lastId-1) + "\n}";
+        return "{\n  \"id\": " + (lastId-1) + "\n}";
     }
 
 }

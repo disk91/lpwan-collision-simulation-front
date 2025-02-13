@@ -33,7 +33,7 @@ public class ModelRunner {
     // usual protocol transmission time for a single frame. The objective is to identify what's
     // going after the first second on a fired frame. The Message per second will be multiplied by 10
     // experience for this on this 10s window
-    public void runStep(RadioModel r, int messagesPerSecond ) {
+    public ArrayList<FrameModel> runStep(RadioModel r, int messagesPerSecond ) {
 
         // store the number of messages in every millisecond during experience test
         ArrayList<FrameModel>[] everyMsFrames = new ArrayList[(int)RUN_DURATION_S*1_000];
@@ -116,7 +116,9 @@ public class ModelRunner {
         for (ArrayList<FrameModel> everyMsFrame : everyMsFrames) {
             everyMsFrame.clear();
         }
-        allFrames.clear();
+        /*allFrames.clear();*/
+
+        return allFrames;
 
     }
 

@@ -68,26 +68,14 @@ public class SimulationConnecter extends ModelRunner{
         LoRaWanRun = loRaWanRun;
     }
 
-
-    private ArrayList<FrameModel> genFrameModel(RadioModel r){
-        ArrayList<FrameModel> allFrames = new ArrayList<FrameModel>();
-
-        // Generate 10x more frame per second on a 10s time range
-        for ( int i = 0 ; i < simulationMessagePerSecond * 10 ; i++ ) {
-            // get a starting time in us
-            long start = (long)Math.floor(Math.random()*RUN_DURATION_S*1_000_000);
-            // Generate the frames
-            ArrayList<FrameModel> fms = r.getFrameModel(start);
-            for ( FrameModel fm : fms ) {
-                // only keep what happen on the seconds 1st & 9th and for every ms link the frame
-                // to this slot time.
-                if ( fm.getUsEnd() < WINDOW_START_S*1_000_000 || fm.getUsStart() > WINDOW_STOP_S*1_000_000 ) continue;
-                
-                allFrames.add(fm);
+    private void removeHeadFrameModel(ArrayList<FrameModel> fms){
+        for ( FrameModel fm : fms ) {
+            FrameModel fmNext = fm;
+            while(fmNext != null){
+                fmNext.setHead(null);
+                fmNext = fmNext.getNext();
             }
         }
-
-        return allFrames;
     }
 
     public void simulationRun(){
@@ -99,19 +87,22 @@ public class SimulationConnecter extends ModelRunner{
         if(MiotyModelRun){
             // Run Mioty
             MiotyFrames.clear();
-            MiotyFrames = genFrameModel(r);
+            MiotyFrames = runStep(r, simulationMessagePerSecond);
+            removeHeadFrameModel(MiotyFrames);
         }
 
         if(SigfoxModelRun){
             // Run sigfox
             SigfoxFrames.clear();
-            SigfoxFrames = genFrameModel(s);
+            SigfoxFrames = runStep(s, simulationMessagePerSecond);
+            removeHeadFrameModel(SigfoxFrames);
         }
 
         if(LoRaWanRun){
             // Run LoRaWan
             LoRaWanFrames.clear();
-            MiotyFrames = genFrameModel(l);
+            LoRaWanFrames = runStep(l, simulationMessagePerSecond);
+            removeHeadFrameModel(LoRaWanFrames);
         }
         
 
