@@ -1,30 +1,29 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
 import * as echarts from "echarts";
+import { useSimulationAPI } from "~/composables/useSimulationAPI";
+
+const { getSimulationResults } = useSimulationAPI();
 
 const chartRef = ref<HTMLElement | null>(null);
 let chartInstance: echarts.ECharts | null = null;
 const data = ref([]);
 const windowSize = 20; // Fenêtre fixe de 20 secondes
-let currentTime = 0;
 
-// Ajoute toutes les bandes d'un coup
-const addBands = () => {
-  for (let i = 0; i < windowSize * 100; i++) {
-    const frequency = Math.random() * 1000; // Fréquence aléatoire entre 0 et 1000 Hz
-    const duration = Math.random() * (0.05 - 0.01) + 0.01; // Durée entre 0.01s et 0.05s
-    const collision = Math.random() < 0.1; // 10% de chance de collision
-
-    data.value.push({
-      time: currentTime, // Début de la bande (temps)
-      duration,
-      frequency,
-      collision,
-    });
-
-    currentTime += 0.01; // Avance de 0.01s
+// Fonction pour récupérer les résultats de la simulation
+const fetchSimulationResults = async (simulationId: number) => {
+  try {
+    const results = await getSimulationResults(simulationId);
+    data.value = results.loRaWanFrames.map((frame) => ({
+      time: frame.usStart / 1e6, // Convertir microsecondes en secondes
+      duration: (frame.usEnd - frame.usStart) / 1e6, // Convertir microsecondes en secondes
+      frequency: frame.channel, // Utiliser le champ channel comme fréquence
+      collision: frame.collision,
+    }));
+    updateChart();
+  } catch (error) {
+    console.error("Erreur lors de la récupération des résultats de la simulation :", error);
   }
-  updateChart();
 };
 
 // Met à jour l'ensemble du graphique
@@ -44,7 +43,7 @@ const updateChart = () => {
       type: "value",
       name: "Fréquence (Hz)",
       min: 0,
-      max: 1000,
+      max: 2000,
       animation: true,
     },
     dataZoom: [
@@ -122,7 +121,7 @@ const resizeChart = () => {
 
 onMounted(() => {
   initChart();
-  addBands(); // Ajoute toutes les bandes d'un coup
+  fetchSimulationResults(0); // Remplacez 1 par l'ID de votre simulation
 
   window.addEventListener("keydown", handleKeyDown);
   window.addEventListener("keyup", handleKeyUp);
