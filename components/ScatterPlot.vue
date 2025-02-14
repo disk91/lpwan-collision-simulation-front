@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
-import * as echarts from "echarts";
-import { useSimulationAPI } from "~/composables/useSimulationAPI";
+import { ref, onMounted, onUnmounted } from 'vue';
+import * as echarts from 'echarts';
+import { useSimulationAPI } from '~/composables/useSimulationAPI';
 
 const { getSimulationResults } = useSimulationAPI();
 
@@ -10,7 +10,11 @@ let chartInstance: echarts.ECharts | null = null;
 const data = ref([]);
 const windowSize = 20; // Fenêtre fixe de 20 secondes
 
-// Fonction pour récupérer les résultats de la simulation
+// Variable réactive pour stocker l'index de la trame survolée
+const hoveredIndex = ref<number | null>(null);
+
+const defaultOpacity = 0.6; // Opacité par défaut (60%)
+
 const fetchSimulationResults = async (simulationId: number) => {
   try {
     const results = await getSimulationResults(simulationId);
@@ -24,43 +28,38 @@ const fetchSimulationResults = async (simulationId: number) => {
     }));
     updateChart();
   } catch (error) {
-    console.error("Erreur lors de la récupération des résultats de la simulation :", error);
+    console.error('Erreur lors de la récupération des résultats de la simulation :', error);
   }
 };
 
-// Met à jour uniquement la configuration du zoom (dataZoom) pour l'axe X
 const updateDataZoom = (xZoomOnWheel: boolean) => {
   if (!chartInstance) return;
-
   chartInstance.setOption({
     dataZoom: [
-      { type: "inside", xAxisIndex: 0, zoomOnMouseWheel: xZoomOnWheel },
-      { type: "inside", yAxisIndex: 0, zoomOnMouseWheel: "shift" },
+      { type: 'inside', xAxisIndex: 0, zoomOnMouseWheel: xZoomOnWheel },
+      { type: 'inside', yAxisIndex: 0, zoomOnMouseWheel: 'shift' },
     ],
   });
 };
 
-// Désactive le zoom sur l'axe X lorsque SHIFT est enfoncée
 const handleKeyDown = (event: KeyboardEvent) => {
-  if (event.key === "Shift") {
+  if (event.key === 'Shift') {
     updateDataZoom(false);
   }
 };
 
-// Réactive le zoom sur l'axe X lorsque SHIFT est relâchée
 const handleKeyUp = (event: KeyboardEvent) => {
-  if (event.key === "Shift") {
+  if (event.key === 'Shift') {
     updateDataZoom(true);
   }
 };
 
-// Met à jour l'ensemble du graphique
 const updateChart = () => {
   if (!chartInstance) return;
 
   chartInstance.setOption({
     tooltip: {
-      trigger: "item",
+      trigger: 'item',
       formatter: (params) => {
         const frame = params.data;
         return `
@@ -74,39 +73,103 @@ const updateChart = () => {
       },
     },
     xAxis: {
-      type: "value",
-      name: "Temps (s)",
+      type: 'value',
+      name: 'Temps (s)',
       min: 0,
       max: windowSize,
     },
     yAxis: {
-      type: "value",
-      name: "Fréquence (Hz)",
+      type: 'value',
+      name: 'Fréquence (Hz)',
       min: 0,
       max: 2000,
     },
     dataZoom: [
-      { type: "inside", xAxisIndex: 0, zoomOnMouseWheel: true },
-      { type: "inside", yAxisIndex: 0, zoomOnMouseWheel: "shift" },
+      { type: 'inside', xAxisIndex: 0, zoomOnMouseWheel: true },
+      { type: 'inside', yAxisIndex: 0, zoomOnMouseWheel: 'shift' },
     ],
     series: [
       {
-        type: "custom",
+        type: 'custom',
         renderItem: (params, api) => {
-          const point = api.coord([api.value(0), api.value(1)]);
-          const width = api.size([api.value(2), 0])[0];
-          const height = 10;
+          const xValue = api.value(0);
+          const yValue = api.value(1);
+          const duration = api.value(2);
+          const collision = api.value(3);
+          const mainColor = collision ? 'red' : 'blue';
+
+          // Positionnement horizontal (inchangé)
+          const pt = api.coord([xValue, yValue]);
+          const size = api.size([duration, 0]);
+          const totalWidth = size[0];
+          const borderWidth = 4; // Largeur fixe pour les bords gauche et droit
+          const leftWidth = Math.min(borderWidth, totalWidth);
+          const rightWidth = Math.min(borderWidth, totalWidth - leftWidth);
+          const middleWidth = totalWidth - leftWidth - rightWidth;
+
+          // Modification de la hauteur au survol
+          const baseHeight = 10;
+          const isHovered = hoveredIndex.value === params.dataIndex;
+          const scaleFactor = isHovered ? 1.05 : 1; // Augmentation de 5% si survolé
+          const newHeight = baseHeight * scaleFactor;
+          // Centrer verticalement la trame
+          const startY = pt[1] - newHeight / 2;
+          const currentOpacity = isHovered ? 1 : defaultOpacity;
+
+          // Conserver l'empilement horizontal : les rectangles sont alignés sur la même ligne
+          const leftRect = {
+            type: 'rect',
+            shape: {
+              x: pt[0],
+              y: startY,
+              width: leftWidth,
+              height: newHeight,
+            },
+            style: {
+              fill: 'green',
+              opacity: currentOpacity,
+            },
+          };
+
+          const middleRect = {
+            type: 'rect',
+            shape: {
+              x: pt[0] + leftWidth,
+              y: startY,
+              width: middleWidth,
+              height: newHeight,
+            },
+            style: {
+              fill: mainColor,
+              opacity: currentOpacity,
+            },
+          };
+
+          const rightRect = {
+            type: 'rect',
+            shape: {
+              x: pt[0] + leftWidth + middleWidth,
+              y: startY,
+              width: rightWidth,
+              height: newHeight,
+            },
+            style: {
+              fill: 'yellow',
+              opacity: currentOpacity,
+            },
+          };
 
           return {
-            type: "rect",
-            shape: { x: point[0], y: point[1] - height / 2, width, height },
-            style: { fill: api.value(3) ? "red" : "blue" },
+            type: 'group',
+            triggerEvent: true,
+            silent: false,
+            children: [leftRect, middleRect, rightRect],
           };
         },
         encode: {
-          x: "time",
-          y: "frequency",
-          tooltip: ["time", "frequency", "duration", "collision", "group", "lost"],
+          x: 'time',
+          y: 'frequency',
+          tooltip: ['time', 'frequency', 'duration', 'collision', 'group', 'lost'],
         },
         data: data.value.map((d) => [d.time, d.frequency, d.duration, d.collision, d.group, d.lost]),
       },
@@ -114,15 +177,27 @@ const updateChart = () => {
   });
 };
 
-// Initialise le graphique
 const initChart = () => {
   if (chartRef.value) {
     chartInstance = echarts.init(chartRef.value);
     updateChart();
+
+    // Attache des écouteurs d'événements pour gérer le survol
+    chartInstance.on('mouseover', (params) => {
+      if (params.componentType === 'series' && params.seriesType === 'custom') {
+        hoveredIndex.value = params.dataIndex;
+        updateChart();
+      }
+    });
+    chartInstance.on('mouseout', (params) => {
+      if (params.componentType === 'series' && params.seriesType === 'custom') {
+        hoveredIndex.value = null;
+        updateChart();
+      }
+    });
   }
 };
 
-// Redimensionne le graphique
 const resizeChart = () => {
   if (chartInstance) {
     chartInstance.resize();
@@ -132,16 +207,14 @@ const resizeChart = () => {
 onMounted(() => {
   initChart();
   fetchSimulationResults(0); // Remplacez 0 par l'ID de votre simulation
-  window.addEventListener("resize", resizeChart);
-
-  window.addEventListener("keydown", handleKeyDown);
-  window.addEventListener("keyup", handleKeyUp);
-  window.addEventListener("resize", resizeChart);
+  window.addEventListener('resize', resizeChart);
+  window.addEventListener('keydown', handleKeyDown);
+  window.addEventListener('keyup', handleKeyUp);
 });
 
 onUnmounted(() => {
   if (chartInstance) chartInstance.dispose();
-  window.removeEventListener("resize", resizeChart);
+  window.removeEventListener('resize', resizeChart);
 });
 </script>
 

@@ -8,13 +8,7 @@
 
     <!-- Partie centrale : boutons de contrôle et indicateur d'état -->
     <div class="topbar-center">
-      <UButtonGroup>
-        <UButton @click="createSimulation_p()" class="control-btn" icon="mdi:play" />
-        <UButton @click="getSimulationResults_p()" class="control-btn" icon="mdi:stop" color="red" /> <!-- stopSimulation() -->
-        <UButton @click="" class="control-btn" icon="mdi:pause" color="orange" /> <!-- pauseSimulation -->
-        <UButton @click="" class="control-btn" label="Running ?" color="white" /> <!-- {{ simulationStatus }} -->
-      </UButtonGroup>
-
+      <UButton @click="" class="control-btn" label="Connected ?" color="white" /> <!-- {{ simulationStatus }} -->
     </div>
 
     <!-- Partie droite : bouton mode sombre et (optionnel) bouton hamburger pour mobile -->
