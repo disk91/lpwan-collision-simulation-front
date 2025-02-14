@@ -88,6 +88,27 @@ const handleKeyUp = (event: KeyboardEvent) => {
 const updateChart = () => {
   if (!chartInstance) return;
 
+  // Valeurs par défaut
+  let xMin = 0;
+  let xMax = windowSize;
+  let yMin = 0;
+  let yMax = 2000;
+
+  // Si des données sont disponibles, calculez les limites réelles
+  if (data.value.length > 0) {
+    const xValues = data.value.map(d => d.time);
+    xMin = Math.min(...xValues);
+    xMax = Math.max(...xValues);
+
+    const yValues = data.value.map(d => d.frequency);
+    yMin = Math.min(...yValues);
+    yMax = Math.max(...yValues);
+  }
+
+  // Calcul du padding de 10 % pour les axes
+  const xPadding = (xMax - xMin) * 0.1;
+  const yPadding = (yMax - yMin) * 0.1;
+
   chartInstance.setOption({
     tooltip: {
       trigger: 'item',
@@ -104,21 +125,33 @@ const updateChart = () => {
         `;
       },
     },
+    // Application du padding sur les axes
     xAxis: {
       type: 'value',
       name: 'Temps (s)',
-      min: 0,
-      max: windowSize,
+      min: xMin - xPadding,
+      max: xMax + xPadding,
     },
     yAxis: {
       type: 'value',
       name: 'Fréquence (Hz)',
-      min: 0,
-      max: 2000,
+      min: yMin - yPadding,
+      max: yMax + yPadding,
     },
     dataZoom: [
-      { type: 'inside', xAxisIndex: 0, zoomOnMouseWheel: true },
-      { type: 'inside', yAxisIndex: 0, zoomOnMouseWheel: 'shift' },
+      {
+        type: 'inside',
+        xAxisIndex: 0,
+        // La fenêtre visible initiale couvre "windowSize" secondes, avec un padding de 10 %
+        startValue: xMin - xPadding,
+        endValue: Math.min(xMin + windowSize + xPadding, xMax + xPadding),
+        zoomOnMouseWheel: true,
+      },
+      {
+        type: 'inside',
+        yAxisIndex: 0,
+        zoomOnMouseWheel: 'shift',
+      },
     ],
     series: [
       {
@@ -130,7 +163,7 @@ const updateChart = () => {
           const collision = api.value(3);
           const mainColor = collision ? 'red' : 'blue';
 
-          // Positionnement horizontal (inchangé)
+          // Positionnement horizontal
           const pt = api.coord([xValue, yValue]);
           const size = api.size([duration, 0]);
           const totalWidth = size[0];
@@ -142,13 +175,13 @@ const updateChart = () => {
           // Modification de la hauteur au survol
           const baseHeight = 10;
           const isHovered = hoveredIndex.value === params.dataIndex;
-          const scaleFactor = isHovered ? 1.05 : 1; // Augmentation de 5% si survolé
+          const scaleFactor = isHovered ? 1.05 : 1; // Augmentation de 5 % en cas de survol
           const newHeight = baseHeight * scaleFactor;
           // Centrer verticalement la trame
           const startY = pt[1] - newHeight / 2;
           const currentOpacity = isHovered ? 1 : defaultOpacity;
 
-          // Conserver l'empilement horizontal : les rectangles sont alignés sur la même ligne
+          // Conserver l'empilement horizontal des rectangles
           const leftRect = {
             type: 'rect',
             shape: {
@@ -203,7 +236,15 @@ const updateChart = () => {
           y: 'frequency',
           tooltip: ['time', 'frequency', 'duration', 'collision', 'group', 'lost', 'type'],
         },
-        data: data.value.map((d) => [d.time, d.frequency, d.duration, d.collision, d.group, d.lost, d.type]),
+        data: data.value.map((d) => [
+          d.time,
+          d.frequency,
+          d.duration,
+          d.collision,
+          d.group,
+          d.lost,
+          d.type,
+        ]),
       },
     ],
   });
