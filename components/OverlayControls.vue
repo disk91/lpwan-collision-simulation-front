@@ -7,9 +7,10 @@
         </div>
         <!-- Bouton pour le mode plein écran -->
         <UButtonGroup>
-            <UButton 
+            <UButton icon="i-mdi-info" @click="" class="btn-export"/> <!-- Focus sidebar item -->
+            <UButton    
                 :icon="isFullScreen ? 'i-mdi-fullscreen-exit' : 'i-mdi-fullscreen'" 
-                @click="toggleFullScreen" 
+                @click="toggleFullScreen"
                 class="btn-fullscreen"
                 />
                 <UButton icon="i-mdi-download" @click="exportChart" class="btn-export"/>

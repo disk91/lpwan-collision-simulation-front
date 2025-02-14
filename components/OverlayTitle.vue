@@ -1,0 +1,35 @@
+<!-- components/OverlayTitle.vue -->
+<template>
+    <div class="overlay-title">
+      <span>{{ title }}</span>
+    </div>
+  </template>
+  
+  <script setup lang="ts">
+  defineProps<{ title: string }>()
+  </script>
+  
+  <style scoped>
+  .overlay-title {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 1rem;
+    z-index: 100;
+    /* Par défaut, l'overlay est caché */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  
+  /* Affichage de l'overlay uniquement lorsque la souris survole le conteneur */
+  .simulation-container:hover .overlay-title {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  </style>
+  

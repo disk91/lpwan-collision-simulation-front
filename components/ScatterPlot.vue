@@ -18,14 +18,45 @@ const defaultOpacity = 0.6; // Opacité par défaut (60%)
 const fetchSimulationResults = async (simulationId: number) => {
   try {
     const results = await getSimulationResults(simulationId);
-    data.value = results.loRaWanFrames.map((frame) => ({
-      time: frame.usStart / 1e6, // Convertir microsecondes en secondes
-      duration: (frame.usEnd - frame.usStart) / 1e6, // Convertir microsecondes en secondes
-      frequency: frame.channel, // Utiliser le champ channel comme fréquence
-      collision: frame.collision,
-      group: frame.group,
-      lost: frame.lost,
-    }));
+    const combinedData = [];
+
+    if (results.loRaWanRun) {
+      combinedData.push(...results.loRaWanFrames.map((frame) => ({
+        time: frame.usStart / 1e6, // Convertir microsecondes en secondes
+        duration: (frame.usEnd - frame.usStart) / 1e6, // Convertir microsecondes en secondes
+        frequency: frame.channel, // Utiliser le champ channel comme fréquence
+        collision: frame.collision,
+        group: frame.group,
+        lost: frame.lost,
+        type: 'LoRaWan'
+      })));
+    }
+
+    if (results.MiotyModelRun) {
+      combinedData.push(...results.miotyFrames.map((frame) => ({
+        time: frame.usStart / 1e6, // Convertir microsecondes en secondes
+        duration: (frame.usEnd - frame.usStart) / 1e6, // Convertir microsecondes en secondes
+        frequency: frame.channel, // Utiliser le champ channel comme fréquence
+        collision: frame.collision,
+        group: frame.group,
+        lost: frame.lost,
+        type: 'Mioty'
+      })));
+    }
+
+    if (results.sigfoxRun) {
+      combinedData.push(...results.sigfoxFrames.map((frame) => ({
+        time: frame.usStart / 1e6, // Convertir microsecondes en secondes
+        duration: (frame.usEnd - frame.usStart) / 1e6, // Convertir microsecondes en secondes
+        frequency: frame.channel, // Utiliser le champ channel comme fréquence
+        collision: frame.collision,
+        group: frame.group,
+        lost: frame.lost,
+        type: 'Sigfox'
+      })));
+    }
+
+    data.value = combinedData;
     updateChart();
   } catch (error) {
     console.error('Erreur lors de la récupération des résultats de la simulation :', error);
@@ -68,7 +99,8 @@ const updateChart = () => {
           <b>Durée :</b> ${frame[2]} s<br/>
           <b>Collision :</b> ${frame[3] ? "Oui" : "Non"}<br/>
           <b>Groupe :</b> ${frame[4]}<br/>
-          <b>Perte :</b> ${frame[5] ? "Oui" : "Non"}
+          <b>Perte :</b> ${frame[5] ? "Oui" : "Non"}<br/>
+          <b>Type :</b> ${frame[6]}
         `;
       },
     },
@@ -169,9 +201,9 @@ const updateChart = () => {
         encode: {
           x: 'time',
           y: 'frequency',
-          tooltip: ['time', 'frequency', 'duration', 'collision', 'group', 'lost'],
+          tooltip: ['time', 'frequency', 'duration', 'collision', 'group', 'lost', 'type'],
         },
-        data: data.value.map((d) => [d.time, d.frequency, d.duration, d.collision, d.group, d.lost]),
+        data: data.value.map((d) => [d.time, d.frequency, d.duration, d.collision, d.group, d.lost, d.type]),
       },
     ],
   });
