@@ -1,4 +1,3 @@
-<!-- ~/components/SideBar.vue -->
 <template>
   <aside class="sidebar">
     <!-- Bouton pour ajouter une nouvelle simulation -->
@@ -9,10 +8,10 @@
     </div>
 
     <!-- Liste des simulations -->
-    <div v-for="(sim, index) in localSimulations" :key="sim.id" class="simulation-item">
+    <div v-for="sim in localSimulations" :key="sim.id" class="simulation-item">
       <!-- En-tête cliquable pour ouvrir/fermer le panneau -->
       <div class="simulation-header" @click="toggleSimulation(sim.id)">
-        <h3>Simulation {{ index + 1 }}</h3>
+        <h3>{{ simulationAPI.simulationState.simulationsTitle[sim.id] }}</h3>
         <UIcon :name="sim.isOpen ? 'chevron-up' : 'chevron-down'" />
       </div>
 
@@ -39,6 +38,12 @@
             <input type="color" v-model="sim.parameters.color" />
           </div>
 
+          <div class="form-group">
+            <label>Messages / s</label>
+            <input type="range" v-model="sim.parameters.simulationMessagePerSecond" min="1" max="200" />
+            <span>{{ sim.parameters.simulationMessagePerSecond }}</span>
+          </div>
+
           <div class="buttons">
             <UButton type="submit" class="run-btn">
               {{ sim.ran ? 'Rerun Simulation' : 'Run Simulation' }}
@@ -62,7 +67,7 @@ interface LocalSimulation {
   isOpen: boolean
   loading: boolean
   ran: boolean
-  parameters: { model: string | null; color: string }
+  parameters: { model: string | null; color: string; simulationMessagePerSecond: number }
 }
 
 const localSimulations = ref<LocalSimulation[]>([])
@@ -75,7 +80,7 @@ const updateLocalSimulations = () => {
       isOpen: false,
       loading: false,
       ran: false,
-      parameters: { model: null, color: '#000000' }
+      parameters: { model: "Mioty", color: '#000000', simulationMessagePerSecond: 10 }
     }
   })
 }
@@ -83,6 +88,7 @@ const updateLocalSimulations = () => {
 // Initialisation et synchronisation avec le store
 updateLocalSimulations()
 watch(() => simulationAPI.simulationState.simulationIds, updateLocalSimulations)
+watch(() => simulationAPI.simulationState.simulationsTitle, updateLocalSimulations)
 
 function addSimulation() {
   simulationAPI.createSimulation()
@@ -115,7 +121,7 @@ function runSimulation_p(id: number) {
 
   // Construire l'objet de paramètres en fonction du modèle choisi
   const parameters = {
-    simulationMessagePerSecond: 2,
+    simulationMessagePerSecond: sim.parameters.simulationMessagePerSecond,
     MiotyModelRun: sim.parameters.model === 'Mioty',
     SigfoxModelRun: sim.parameters.model === 'Sigfox',
     LoRaWanRun: sim.parameters.model === 'LoRaWan'
@@ -182,6 +188,9 @@ label {
 input[type="color"] {
   width: 100%;
   padding: 0.3rem;
+}
+input[type="range"] {
+  width: 100%;
 }
 .buttons {
   display: flex;

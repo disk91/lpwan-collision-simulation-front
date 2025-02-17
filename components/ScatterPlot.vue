@@ -88,9 +88,6 @@ const updateChart = () => {
   // Calcul des bornes sur l'axe X et Y
   let xMin = 0, xMax = windowSize, yMin = 0, yMax = 2000;
   if (data.value.length > 0) {
-    const xValues = data.value.map(d => d.time);
-    xMin = Math.min(...xValues);
-    xMax = Math.max(...xValues);
     const yValues = data.value.map(d => d.frequency);
     yMin = Math.min(...yValues);
     yMax = Math.max(...yValues);
@@ -235,19 +232,6 @@ const initChart = () => {
   if (chartRef.value) {
     chartInstance = echarts.init(chartRef.value);
     updateChart();
-
-    chartInstance.on('mouseover', (params) => {
-      if (params.componentType === 'series' && params.seriesType === 'custom') {
-        hoveredIndex.value = params.dataIndex;
-        updateChart();
-      }
-    });
-    chartInstance.on('mouseout', (params) => {
-      if (params.componentType === 'series' && params.seriesType === 'custom') {
-        hoveredIndex.value = null;
-        updateChart();
-      }
-    });
   }
 };
 

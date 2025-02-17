@@ -1,36 +1,36 @@
 <template>
-  <div class="simulations">
-    <div class="simulation-container" v-for="id in simulationIds" :key="`sim-${id}`" :data-id="id">
-      <ScatterPlot :simulation-id="id" />
-      <OverlayControls :simulation-id="id" />
-      <OverlayTitle title="Graphic title" />
+  <ClientOnly fallback-tag="span" fallback="Loading graphs...">
+    <div :key="containerKey" class="simulations">
+      <div class="simulation-container" v-for="id in simulationIds" :key="`sim-${id}`" :data-id="id">
+        <ScatterPlot :simulation-id="id" />
+        <OverlayControls :simulation-id="id" />
+        <OverlayTitle :title="simulationState.simulationsTitle[id]" />
+      </div>
     </div>
-  </div>
+  </ClientOnly>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useSimulationAPI } from '~/composables/useSimulationAPI'
 import ScatterPlot from '~/components/ScatterPlot.vue'
 import OverlayTitle from '~/components/OverlayTitle.vue'
 import OverlayControls from '~/components/OverlayControls.vue'
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 
 const { simulationState, getSimulationIds, pingServer } = useSimulationAPI()
-const renderKey = ref(0) // Ajoute une clé de rendu
-
-async function refreshSimulations() {
-  await getSimulationIds()
-  renderKey.value++ // Incrémente pour forcer le re-rendu
-}
-
 const simulationIds = computed(() => simulationState.simulationIds)
+const containerKey = ref(0)
+
+watch(simulationIds, () => {
+  containerKey.value++
+})
 
 onMounted(async () => {
   await getSimulationIds()
 
-    // Démarrer le ping toutes les secondes
-    const pingInterval = setInterval(async () => {
+  // Démarrer le ping toutes les secondes
+  const pingInterval = setInterval(async () => {
     try {
       await pingServer()
     } catch (error) {
@@ -38,7 +38,6 @@ onMounted(async () => {
     }
   }, 2000)
 
-  // Nettoyer l'intervalle lorsque le composant est démonté
   onUnmounted(() => {
     clearInterval(pingInterval)
   })

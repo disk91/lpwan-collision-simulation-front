@@ -1,7 +1,7 @@
 // ~/composables/useSimulationAPI.ts
 import { reactive } from 'vue'
 
-// On récupère la baseURL dans un contexte valide (lors de l'exécution d'une fonction)
+// Récupère la baseURL dans un contexte Nuxt
 function getBaseURL() {
   return useRuntimeConfig().public.baseURL;
 }
@@ -29,10 +29,10 @@ export interface SimulationModel {
   LoRaWanFrames: FrameModel[]
 }
 
-// Objet réactif centralisé (sans isLoading)
 const simulationState = reactive({
   simulationIds: [] as number[],
   simulations: {} as Record<number, SimulationModel>,
+  simulationsTitle: {} as Record<number, string>,
   error: null as string | null,
   connectionStatus: 'disconnected'
 })
@@ -42,8 +42,8 @@ async function createSimulation() {
   const baseURL = getBaseURL();
   try {
     const parameters = {
-      simulationMessagePerSecond: 2,
-      MiotyModelRun: true,
+      simulationMessagePerSecond: 1,
+      MiotyModelRun: false,
       SigfoxModelRun: false,
       LoRaWanRun: false,
     }
@@ -54,8 +54,6 @@ async function createSimulation() {
       body: JSON.stringify(parameters)
     })
 
-    console.log(JSON.stringify(parameters))
-
     if (!response.ok) {
       const errorData = await response.json()
       throw new Error(
@@ -63,8 +61,12 @@ async function createSimulation() {
       )
     }
 
-    const data = await response.json() // { id: identifiant }
-    simulationState.simulationIds.push(data.id)
+    const data = await response.json()
+    const simulationId = data.id;
+    const title = `simulation ${simulationId}`; // Générer le titre avec l'ID
+
+    simulationState.simulationIds.push(simulationId)
+    simulationState.simulationsTitle[simulationId] = title; // Ajouter le titre de la simulation
     return data
   } catch (error: any) {
     console.error("Erreur dans createSimulation :", error)
@@ -161,6 +163,12 @@ async function getSimulationIds() {
     }
 
     simulationState.simulationIds = data.id; // Stocke uniquement le tableau d'IDs
+
+    // Générer les titres pour chaque simulation
+    data.id.forEach((simulationId: number) => {
+      simulationState.simulationsTitle[simulationId] = `simulation ${simulationId}`;
+    });
+
     return data.id;
   } catch (error: any) {
     console.error("Erreur dans getSimulationIds :", error);
