@@ -16,7 +16,7 @@ import OverlayTitle from '~/components/OverlayTitle.vue'
 import OverlayControls from '~/components/OverlayControls.vue'
 import { ref, computed } from 'vue'
 
-const { simulationState, getSimulationIds } = useSimulationAPI()
+const { simulationState, getSimulationIds, pingServer } = useSimulationAPI()
 const renderKey = ref(0) // Ajoute une clé de rendu
 
 async function refreshSimulations() {
@@ -28,6 +28,20 @@ const simulationIds = computed(() => simulationState.simulationIds)
 
 onMounted(async () => {
   await getSimulationIds()
+
+    // Démarrer le ping toutes les secondes
+    const pingInterval = setInterval(async () => {
+    try {
+      await pingServer()
+    } catch (error) {
+      console.error("Erreur lors du ping du serveur :", error)
+    }
+  }, 2000)
+
+  // Nettoyer l'intervalle lorsque le composant est démonté
+  onUnmounted(() => {
+    clearInterval(pingInterval)
+  })
 })
 </script>
 

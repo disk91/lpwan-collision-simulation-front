@@ -8,7 +8,7 @@
 
     <!-- Partie centrale : boutons de contrôle et indicateur d'état -->
     <div class="topbar-center">
-      <UButton @click="" class="control-btn" label={{ connectionStatus }} color="white" /> <!-- {{ simulationStatus }} -->
+      <UButton @click="" class="control-btn" :label="connectionStatus" color="white" /> <!-- {{ simulationStatus }} -->
     </div>
 
     <!-- Partie droite : bouton mode sombre et (optionnel) bouton hamburger pour mobile -->
