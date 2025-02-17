@@ -24,12 +24,12 @@ const containerKey = ref(0)
 
 watch(simulationIds, () => {
   containerKey.value++
-})
+}, { deep: true })
 
 onMounted(async () => {
   await getSimulationIds()
 
-  // Démarrer le ping toutes les secondes
+  // Démarrer le ping toutes les 2 secondes
   const pingInterval = setInterval(async () => {
     try {
       await pingServer()
