@@ -1,9 +1,17 @@
 <template>
+  <div>
+    <div class="checkboxes">
+      <label v-for="group in availableGroups" :key="group" class="checkbox-label">
+        <input type="checkbox" v-model="selectedGroups" :value="group" />
+        Groupe {{ group }}
+      </label>
+    </div>
+  </div>
   <div ref="chartRef" class="chart-container"></div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted, defineProps } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, defineProps } from 'vue';
 import * as echarts from 'echarts';
 import { useSimulationAPI } from '~/composables/useSimulationAPI';
 
@@ -26,15 +34,44 @@ let chartInstance: echarts.ECharts | null = null;
 const data = ref<FrameData[]>([]);
 const windowSize = 20; // Fenêtre d'affichage en secondes
 
-// Pour gérer le survol dans le graphique
+// Gestion du survol dans le graphique
 const hoveredIndex = ref<number | null>(null);
 const defaultOpacity = 0.6;
+
+// Gestion de la sélection des groupes via checkbox
+const selectedGroups = ref<number[]>([]);
+const availableGroups = computed(() => {
+  // Extrait les groupes disponibles à partir des données
+  const groups = new Set<number>();
+  data.value.forEach(frame => groups.add(frame.group));
+  return Array.from(groups).sort((a, b) => a - b);
+});
+
+// Dès que la liste des groupes disponibles est mise à jour, on s'assure que
+// tous les groupes soient sélectionnés par défaut (ou on complète ceux manquants)
+watch(availableGroups, (newGroups) => {
+  if (selectedGroups.value.length === 0) {
+    selectedGroups.value = newGroups;
+  } else {
+    // Ajoute les nouveaux groupes s'ils n'étaient pas déjà sélectionnés
+    newGroups.forEach(group => {
+      if (!selectedGroups.value.includes(group)) {
+        selectedGroups.value.push(group);
+      }
+    });
+  }
+});
+
+// Met à jour le graphique lorsque la sélection change
+watch(selectedGroups, () => {
+  updateChart();
+});
 
 // Transformation des données reçues depuis le serveur
 const transformSimulationData = (results: any): FrameData[] => {
   const combinedData: FrameData[] = [];
 
-  // Pour LoRaWan (attention à la casse et aux noms utilisés dans la réponse)
+  // Pour LoRaWan
   if (results.loRaWanRun && results.loRaWanFrames) {
     combinedData.push(
       ...results.loRaWanFrames.map((frame: any) => ({
@@ -214,15 +251,18 @@ const updateChart = () => {
           y: 'frequency',
           tooltip: ['time', 'frequency', 'duration', 'collision', 'group', 'lost', 'type'],
         },
-        data: data.value.map((d) => [
-          d.time,
-          d.frequency,
-          d.duration,
-          d.collision,
-          d.group,
-          d.lost,
-          d.type,
-        ]),
+        // On filtre les données selon la sélection des groupes
+        data: data.value
+          .filter(d => selectedGroups.value.includes(d.group))
+          .map((d) => [
+            d.time,
+            d.frequency,
+            d.duration,
+            d.collision,
+            d.group,
+            d.lost,
+            d.type,
+          ]),
       },
     ],
   });
@@ -243,7 +283,7 @@ const resizeChart = () => {
 
 const fetchAndTransform = async () => {
   try {
-    // Attend que la simulation ne soit plus en cours
+    // Attend que la simulation soit terminée
     const results = await waitUntilSimulationFinished(props.simulationId);
     data.value = transformSimulationData(results);
     updateChart();
@@ -305,5 +345,16 @@ onUnmounted(() => {
 .chart-container {
   width: 100%;
   height: 100%;
+}
+
+/* Style pour les cases à cocher */
+.checkboxes {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.checkbox-label {
+  margin-right: 15px;
+  font-size: 14px;
 }
 </style>
