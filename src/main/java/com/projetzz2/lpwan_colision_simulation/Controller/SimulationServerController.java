@@ -67,6 +67,7 @@ public class SimulationServerController {
         curSimu.setLoRaWanRun(simu.isLoRaWanRun());
         curSimu.setMiotyModelRun(simu.isMiotyModelRun());
         curSimu.setSigfoxModelRun(simu.isSigfoxModelRun());
+        curSimu.setSimulationMessagePerSecond(simu.getSimulationMessagePerSecond());
 
         return curSimu;
     }

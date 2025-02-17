@@ -1,8 +1,5 @@
 package com.projetzz2.lpwan_colision_simulation.Simulation;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 
 import com.projetzz2.lpwan_colision_simulation.Simulation.lpwan_collision_simulation.src.*;
@@ -144,21 +141,24 @@ public class SimulationConnecter extends ModelRunner{
         if(MiotyModelRun){
             // Run Mioty
             MiotyFrames.clear();
-            MiotyFrames = runStep(r, simulationMessagePerSecond);
+            System.out.println("Running Mioty with " + this.simulationMessagePerSecond + "msg/s");
+            MiotyFrames = runStep(r, this.simulationMessagePerSecond);
             removeHeadFrameModel(MiotyFrames);
         }
 
         if(SigfoxModelRun){
             // Run sigfox
             SigfoxFrames.clear();
-            SigfoxFrames = runStep(s, simulationMessagePerSecond);
+            System.out.println("Running Sigfox with " + this.simulationMessagePerSecond + "msg/s");
+            SigfoxFrames = runStep(s, this.simulationMessagePerSecond);
             removeHeadFrameModel(SigfoxFrames);
         }
 
         if(LoRaWanRun){
             // Run LoRaWan
             LoRaWanFrames.clear();
-            LoRaWanFrames = runStep(l, simulationMessagePerSecond);
+            System.out.println("Running LoRaWan with " + this.simulationMessagePerSecond + "msg/s");
+            LoRaWanFrames = runStep(l, this.simulationMessagePerSecond);
             removeHeadFrameModel(LoRaWanFrames);
         }
         
