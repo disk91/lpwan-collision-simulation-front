@@ -2,26 +2,34 @@
     <div class="overlay-controls">
         <!-- Pourcentage de paquets perdus -->
         <div class="packet-loss">
-            {{ packetLoss }}%
+            Packet Loss: {{ packetLoss }}%
         </div>
         <!-- Bouton pour le mode plein écran -->
         <UButtonGroup>
-            <UButton icon="i-mdi-info" @click="" class="btn-export"/> <!-- Focus sidebar item -->
-            <UButton    
-                :icon="isFullScreen ? 'i-mdi-fullscreen-exit' : 'i-mdi-fullscreen'" 
-                @click="toggleFullScreen"
-                class="btn-fullscreen"
-                />
-                <UButton icon="i-mdi-download" @click="" class="btn-export"/>
+            <!-- <UButton icon="i-mdi-info" @click="" class="btn-export" /> Focus sidebar item -->
+            <UButton icon="i-mdi-delete" @click="_deleteSimulation" class="btn-delete" color="red" />
+            <UButton :icon="isFullScreen ? 'i-mdi-fullscreen-exit' : 'i-mdi-fullscreen'" @click="toggleFullScreen"
+                class="btn-fullscreen" />
+            <!-- <UButton icon="i-mdi-download" @click="" class="btn-export" /> -->
         </UButtonGroup>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useSimulationAPI } from '~/composables/useSimulationAPI'
 
 const props = defineProps<{ simulationId: number }>()
-const packetLoss = ref(0)
+const { simulationState, deleteSimulation } = useSimulationAPI()
+
+const packetLoss = computed(() => {
+    const simulation = simulationState.simulations[props.simulationId];
+    if (simulation && simulation.totalFrames > 0) {
+        return (simulation.totalCollisions * 100.0 / simulation.totalFrames).toFixed(2);
+    }
+    return '0.00';
+});
+
 const isFullScreen = ref(false)
 
 function toggleFullScreen() {
@@ -47,6 +55,10 @@ function toggleFullScreen() {
 function onFullScreenChange() {
     const fullScreenContainer = document.querySelector(`.simulation-container[data-id="${props.simulationId}"]`)
     isFullScreen.value = !!document.fullscreenElement && document.fullscreenElement === fullScreenContainer
+}
+
+function _deleteSimulation() {
+    deleteSimulation(props.simulationId)
 }
 
 onMounted(() => {

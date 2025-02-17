@@ -27,6 +27,9 @@ export interface SimulationModel {
   SigfoxFrames: FrameModel[]
   LoRaWanRun: boolean
   LoRaWanFrames: FrameModel[]
+
+  totalCollisions: number
+  totalFrames: number
 }
 
 const simulationState = reactive({
@@ -99,6 +102,7 @@ async function runSimulation(simulationId: number) {
 
     // Démarrer un polling toutes les 1 secondes pour mettre à jour la simulation
     const interval = setInterval(async () => {
+      console.log("Polling simulation...");
       try {
         const simulationData = await getSimulationValues(simulationId);
         // Si simulationRunning est à false, arrêter le polling
