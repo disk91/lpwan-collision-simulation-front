@@ -19,7 +19,7 @@ interface FrameData {
 
 const props = defineProps<{ simulationId: number }>();
 
-const { simulationState, getSimulationValues } = useSimulationAPI();
+const { simulationState, waitUntilSimulationFinished } = useSimulationAPI();
 
 const chartRef = ref<HTMLElement | null>(null);
 let chartInstance: echarts.ECharts | null = null;
@@ -243,13 +243,10 @@ const resizeChart = () => {
 
 const fetchAndTransform = async () => {
   try {
-    // Récupère les données depuis le serveur
-    await getSimulationValues(props.simulationId);
-    const results = simulationState.simulations[props.simulationId];
-    if (results) {
-      data.value = transformSimulationData(results);
-      updateChart();
-    }
+    // Attend que la simulation ne soit plus en cours
+    const results = await waitUntilSimulationFinished(props.simulationId);
+    data.value = transformSimulationData(results);
+    updateChart();
   } catch (error) {
     console.error('Erreur lors de la récupération de la simulation:', error);
   }

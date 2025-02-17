@@ -1,5 +1,5 @@
 // ~/composables/useSimulationAPI.ts
-import { reactive } from 'vue'
+import { reactive, watch } from 'vue'
 
 // Récupère la baseURL dans un contexte Nuxt
 function getBaseURL() {
@@ -236,6 +236,23 @@ async function deleteSimulation(simulationId: number) {
   }
 }
 
+function waitUntilSimulationFinished(simulationId: number): Promise<SimulationModel> {
+  return new Promise((resolve, reject) => {
+    const checkInterval = setInterval(() => {
+      const simulation = simulationState.simulations[simulationId];
+      if (simulation) {
+        if (!simulation.simulationRunning) {
+          clearInterval(checkInterval);
+          resolve(simulation);
+        }
+      } else {
+        clearInterval(checkInterval);
+        reject(new Error(`Simulation with ID ${simulationId} not found`));
+      }
+    }, 100); // Vérifie toutes les 0.1 secondes
+  });
+}
+
 async function pingServer() {
   simulationState.error = null
   const baseURL = getBaseURL();
@@ -268,7 +285,8 @@ export default {
   getSimulationIds,
   setSimulationParameters,
   deleteSimulation,
-  pingServer
+  pingServer,
+  waitUntilSimulationFinished
 }
 
 
@@ -282,5 +300,6 @@ export function useSimulationAPI() {
     setSimulationParameters,
     deleteSimulation,
     pingServer,
+    waitUntilSimulationFinished
   }
 }
