@@ -1,4 +1,3 @@
-<!-- components/OverlayControls.vue -->
 <template>
     <div class="overlay-controls">
         <!-- Pourcentage de paquets perdus -->
@@ -13,7 +12,7 @@
                 @click="toggleFullScreen"
                 class="btn-fullscreen"
                 />
-                <UButton icon="i-mdi-download" @click="exportChart" class="btn-export"/>
+                <UButton icon="i-mdi-download" @click="" class="btn-export"/>
         </UButtonGroup>
     </div>
 </template>
@@ -21,26 +20,22 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 
-// Exemple de donnée pour le pourcentage de paquets perdus
+const props = defineProps<{ simulationId: number }>()
 const packetLoss = ref(0)
 const isFullScreen = ref(false)
 
-// Fonction qui demande le mode plein écran sur le conteneur parent
 function toggleFullScreen() {
-    // On sélectionne le conteneur qui englobe à la fois le graphique et les overlays
-    const fullScreenContainer = document.querySelector('.simulation-container')
+    // Trouve le bon conteneur en fonction de l'ID
+    const fullScreenContainer = document.querySelector(`.simulation-container[data-id="${props.simulationId}"]`)
     if (!fullScreenContainer) return
 
     if (!isFullScreen.value) {
-        // Demande de passage en mode plein écran
         if (fullScreenContainer.requestFullscreen) {
             fullScreenContainer.requestFullscreen()
         } else if ((fullScreenContainer as any).webkitRequestFullscreen) {
             (fullScreenContainer as any).webkitRequestFullscreen()
         }
-        // La mise à jour de isFullScreen se fera via l'événement fullscreenchange
     } else {
-        // Sortie du mode plein écran
         if (document.exitFullscreen) {
             document.exitFullscreen()
         } else if ((document as any).webkitExitFullscreen) {
@@ -49,13 +44,9 @@ function toggleFullScreen() {
     }
 }
 
-function exportChart() {
-    console.log('Exporter le graphique')
-}
-
-// Met à jour isFullScreen en fonction de l'état de fullscreen
 function onFullScreenChange() {
-    isFullScreen.value = !!document.fullscreenElement
+    const fullScreenContainer = document.querySelector(`.simulation-container[data-id="${props.simulationId}"]`)
+    isFullScreen.value = !!document.fullscreenElement && document.fullscreenElement === fullScreenContainer
 }
 
 onMounted(() => {

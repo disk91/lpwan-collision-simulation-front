@@ -1,17 +1,34 @@
 <template>
   <div class="simulations">
-    <div class="simulation-container" v-for="i in 2" :key="i">
-      <ScatterPlot />
-      <OverlayControls />
-      <OverlayTitle title="Graphic title"/>
+    <div class="simulation-container" v-for="id in simulationIds" :key="`sim-${id}`" :data-id="id">
+      <ScatterPlot :simulation-id="id" />
+      <OverlayControls :simulation-id="id" />
+      <OverlayTitle title="Graphic title" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
+import { useSimulationAPI } from '~/composables/useSimulationAPI'
 import ScatterPlot from '~/components/ScatterPlot.vue'
 import OverlayTitle from '~/components/OverlayTitle.vue'
 import OverlayControls from '~/components/OverlayControls.vue'
+import { ref, computed } from 'vue'
+
+const { simulationState, getSimulationIds } = useSimulationAPI()
+const renderKey = ref(0) // Ajoute une clé de rendu
+
+async function refreshSimulations() {
+  await getSimulationIds()
+  renderKey.value++ // Incrémente pour forcer le re-rendu
+}
+
+const simulationIds = computed(() => simulationState.simulationIds)
+
+onMounted(async () => {
+  await getSimulationIds()
+})
 </script>
 
 <style scoped>
@@ -25,7 +42,7 @@ import OverlayControls from '~/components/OverlayControls.vue'
 /* Chaque simulation-container se verra attribuer une part égale de l'espace vertical */
 .simulation-container {
   position: relative;
-  height: 100%;
+  flex: 1;
   width: 100%;
 }
 </style>
@@ -36,6 +53,7 @@ import OverlayControls from '~/components/OverlayControls.vue'
 ::backdrop {
   background-color: rgba(255, 255, 255, 0);
 }
+
 :fullscreen::backdrop,
 :-webkit-full-screen::backdrop {
   background: #fff;

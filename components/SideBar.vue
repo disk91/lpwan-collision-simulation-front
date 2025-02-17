@@ -1,3 +1,4 @@
+<!-- ~/components/SideBar.vue -->
 <template>
   <aside class="sidebar">
     <!-- Bouton pour ajouter une nouvelle simulation -->
@@ -8,27 +9,26 @@
     </div>
 
     <!-- Liste des simulations -->
-    <div v-for="(simulation, index) in simulations" :key="simulation.id" class="simulation-item">
+    <div v-for="(sim, index) in localSimulations" :key="sim.id" class="simulation-item">
       <!-- En-tête cliquable pour ouvrir/fermer le panneau -->
-      <div class="simulation-header" @click="toggleSimulation(simulation.id)">
+      <div class="simulation-header" @click="toggleSimulation(sim.id)">
         <h3>Simulation {{ index + 1 }}</h3>
-        <!-- Icône de flèche -->
-        <UIcon :name="simulation.isOpen ? 'chevron-up' : 'chevron-down'" />
+        <UIcon :name="sim.isOpen ? 'chevron-up' : 'chevron-down'" />
       </div>
 
       <!-- Corps du panneau -->
-      <div v-if="simulation.isOpen" class="simulation-body">
-        <!-- Affichage d'un message de chargement pendant la simulation -->
-        <div v-if="simulation.loading" class="loading">
+      <div v-if="sim.isOpen" class="simulation-body">
+        <!-- Message de chargement pendant la simulation -->
+        <div v-if="sim.loading" class="loading">
           <p>Running simulation...</p>
         </div>
 
-        <!-- Formulaire de paramètres de la simulation -->
-        <form v-else @submit.prevent="runSimulation(simulation.id)">
+        <!-- Formulaire de paramètres -->
+        <form v-else @submit.prevent="runSimulation_p(sim.id)">
           <div class="form-group">
             <label>Model</label>
             <USelect 
-              v-model="simulation.parameters.model" 
+              v-model="sim.parameters.model" 
               :options="models" 
               placeholder="Select a model" 
             />
@@ -36,15 +36,14 @@
 
           <div class="form-group">
             <label>Graph color</label>
-            <input type="color" v-model="simulation.parameters.color" />
+            <input type="color" v-model="sim.parameters.color" />
           </div>
 
-          <!-- Boutons d'action -->
           <div class="buttons">
             <UButton type="submit" class="run-btn">
-              {{ simulation.ran ? 'Rerun Simulation' : 'Run Simulation' }}
+              {{ sim.ran ? 'Rerun Simulation' : 'Run Simulation' }}
             </UButton>
-            <UButton type="button" @click="removeSimulation(simulation.id)" class="delete-btn">
+            <UButton type="button" @click="removeSimulation(sim.id)" class="delete-btn">
               Delete Simulation
             </UButton>
           </div>
@@ -55,78 +54,90 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useSimulationAPI } from '~/composables/useSimulationAPI'
-// Pour générer des identifiants uniques
-import { nanoid } from 'nanoid'
+import { ref, watch } from 'vue'
+import simulationAPI from '~/composables/useSimulationAPI'
 
-const { startSimulation } = useSimulationAPI()
-
-// Options disponibles pour le sélecteur de modèle
-const models = [
-  { label: 'Mioty', value: 'mioty' },
-  { label: 'Sigfox', value: 'sigfox' },
-  { label: 'LoRaWAN', value: 'lorawan' }
-]
-
-// Interface pour représenter une simulation
-interface Simulation {
-  id: string
+interface LocalSimulation {
+  id: number
   isOpen: boolean
   loading: boolean
   ran: boolean
-  parameters: {
-    model: string
-    color: string
-  }
+  parameters: { model: string | null; color: string }
 }
 
-// Tableau réactif de simulations
-const simulations = ref<Simulation[]>([])
+const localSimulations = ref<LocalSimulation[]>([])
 
-// Ajoute une nouvelle simulation avec des valeurs par défaut
-function addSimulation() {
-  simulations.value.push({
-    id: nanoid(),
-    isOpen: true,
-    loading: false,
-    ran: false,
-    parameters: {
-      model: 'mioty',
-      color: '#ff0000'
+const updateLocalSimulations = () => {
+  localSimulations.value = simulationAPI.simulationState.simulationIds.map(id => {
+    const existing = localSimulations.value.find(sim => sim.id === id)
+    return existing || {
+      id,
+      isOpen: false,
+      loading: false,
+      ran: false,
+      parameters: { model: null, color: '#000000' }
     }
   })
 }
 
-// Supprime une simulation en filtrant par son id
-function removeSimulation(id: string) {
-  simulations.value = simulations.value.filter(sim => sim.id !== id)
+// Initialisation et synchronisation avec le store
+updateLocalSimulations()
+watch(() => simulationAPI.simulationState.simulationIds, updateLocalSimulations)
+
+function addSimulation() {
+  simulationAPI.createSimulation()
+    .then(() => {
+      updateLocalSimulations()
+    })
+    .catch(console.error)
 }
 
-// Ouvre ou ferme le panneau d'une simulation
-function toggleSimulation(id: string) {
-  const sim = simulations.value.find(sim => sim.id === id)
+function removeSimulation(id: number) {
+  simulationAPI.deleteSimulation(id)
+    .then(() => {
+      localSimulations.value = localSimulations.value.filter(sim => sim.id !== id)
+    })
+    .catch(console.error)
+}
+
+function toggleSimulation(id: number) {
+  const sim = localSimulations.value.find(sim => sim.id === id)
   if (sim) {
     sim.isOpen = !sim.isOpen
   }
 }
 
-// Lance ou relance la simulation pour la simulation dont l'id est fourni
-function runSimulation(id: string) {
-  const sim = simulations.value.find(sim => sim.id === id)
+function runSimulation_p(id: number) {
+  const sim = localSimulations.value.find(sim => sim.id === id)
   if (!sim) return
 
   sim.loading = true
-  startSimulation(0) // à remplacer par sim.parameters
+
+  // Construire l'objet de paramètres en fonction du modèle choisi
+  const parameters = {
+    simulationMessagePerSecond: 2,
+    MiotyModelRun: sim.parameters.model === 'Mioty',
+    SigfoxModelRun: sim.parameters.model === 'Sigfox',
+    LoRaWanRun: sim.parameters.model === 'LoRaWan'
+  }
+
+  // Appel à l'endpoint set_parameters pour mettre à jour les paramètres
+  simulationAPI.setSimulationParameters(id, parameters)
+    .then(() => {
+      // Une fois les paramètres mis à jour, lancer la simulation
+      return simulationAPI.runSimulation(id)
+    })
     .then(() => {
       sim.loading = false
       sim.ran = true
     })
-    .catch((error) => {
+    .catch(error => {
       console.error('Simulation error:', error)
       sim.loading = false
     })
 }
+
+const models = ['Mioty', 'Sigfox', 'LoRaWan']
 </script>
 
 <style scoped>
@@ -137,22 +148,18 @@ function runSimulation(id: string) {
   height: 100%;
   overflow-y: auto;
 }
-
 .header {
   margin-bottom: 1rem;
 }
-
 .new-simulation-btn {
   width: 100%;
 }
-
 .simulation-item {
   border: 1px solid #ccc;
   border-radius: 4px;
   margin-bottom: 1rem;
   overflow: hidden;
 }
-
 .simulation-header {
   display: flex;
   justify-content: space-between;
@@ -161,40 +168,32 @@ function runSimulation(id: string) {
   background-color: #f5f5f5;
   cursor: pointer;
 }
-
 .simulation-body {
   padding: 0.5rem;
 }
-
 .form-group {
   margin-bottom: 1rem;
 }
-
 label {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: bold;
 }
-
 input[type="color"] {
   width: 100%;
   padding: 0.3rem;
 }
-
 .buttons {
   display: flex;
   gap: 0.5rem;
 }
-
 .run-btn {
   flex: 1;
 }
-
 .delete-btn {
   background-color: #e74c3c;
   flex: 1;
 }
-
 .loading {
   display: flex;
   align-items: center;

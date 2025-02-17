@@ -1,111 +1,100 @@
+<template>
+  <div ref="chartRef" class="chart-container"></div>
+</template>
+
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted, defineProps } from 'vue';
 import * as echarts from 'echarts';
 import { useSimulationAPI } from '~/composables/useSimulationAPI';
 
-const { getSimulationResults } = useSimulationAPI();
+interface FrameData {
+  time: number;
+  duration: number;
+  frequency: number;
+  collision: boolean;
+  group: number;
+  lost: boolean;
+  type: string;
+}
+
+const props = defineProps<{ simulationId: number }>();
+
+const { simulationState, getSimulationValues } = useSimulationAPI();
 
 const chartRef = ref<HTMLElement | null>(null);
 let chartInstance: echarts.ECharts | null = null;
-const data = ref([]);
-const windowSize = 20; // Fenêtre fixe de 20 secondes
+const data = ref<FrameData[]>([]);
+const windowSize = 20; // Fenêtre d'affichage en secondes
 
-// Variable réactive pour stocker l'index de la trame survolée
+// Pour gérer le survol dans le graphique
 const hoveredIndex = ref<number | null>(null);
+const defaultOpacity = 0.6;
 
-const defaultOpacity = 0.6; // Opacité par défaut (60%)
+// Transformation des données reçues depuis le serveur
+const transformSimulationData = (results: any): FrameData[] => {
+  const combinedData: FrameData[] = [];
 
-const fetchSimulationResults = async (simulationId: number) => {
-  try {
-    const results = await getSimulationResults(simulationId);
-    const combinedData = [];
-
-    if (results.loRaWanRun) {
-      combinedData.push(...results.loRaWanFrames.map((frame) => ({
-        time: frame.usStart / 1e6, // Convertir microsecondes en secondes
-        duration: (frame.usEnd - frame.usStart) / 1e6, // Convertir microsecondes en secondes
-        frequency: frame.channel, // Utiliser le champ channel comme fréquence
+  // Pour LoRaWan (attention à la casse et aux noms utilisés dans la réponse)
+  if (results.loRaWanRun && results.loRaWanFrames) {
+    combinedData.push(
+      ...results.loRaWanFrames.map((frame: any) => ({
+        time: frame.usStart / 1e6, // Conversion de microsecondes en secondes
+        duration: (frame.usEnd - frame.usStart) / 1e6,
+        frequency: frame.channel,
         collision: frame.collision,
         group: frame.group,
         lost: frame.lost,
-        type: 'LoRaWan'
-      })));
-    }
+        type: 'LoRaWan',
+      }))
+    );
+  }
 
-    if (results.MiotyModelRun) {
-      combinedData.push(...results.miotyFrames.map((frame) => ({
-        time: frame.usStart / 1e6, // Convertir microsecondes en secondes
-        duration: (frame.usEnd - frame.usStart) / 1e6, // Convertir microsecondes en secondes
-        frequency: frame.channel, // Utiliser le champ channel comme fréquence
+  // Pour Mioty
+  if (results.miotyModelRun && results.miotyFrames) {
+    combinedData.push(
+      ...results.miotyFrames.map((frame: any) => ({
+        time: frame.usStart / 1e6,
+        duration: (frame.usEnd - frame.usStart) / 1e6,
+        frequency: frame.channel,
         collision: frame.collision,
         group: frame.group,
         lost: frame.lost,
-        type: 'Mioty'
-      })));
-    }
+        type: 'Mioty',
+      }))
+    );
+  }
 
-    if (results.sigfoxRun) {
-      combinedData.push(...results.sigfoxFrames.map((frame) => ({
-        time: frame.usStart / 1e6, // Convertir microsecondes en secondes
-        duration: (frame.usEnd - frame.usStart) / 1e6, // Convertir microsecondes en secondes
-        frequency: frame.channel, // Utiliser le champ channel comme fréquence
+  // Pour Sigfox
+  if (results.sigfoxModelRun && results.sigfoxFrames) {
+    combinedData.push(
+      ...results.sigfoxFrames.map((frame: any) => ({
+        time: frame.usStart / 1e6,
+        duration: (frame.usEnd - frame.usStart) / 1e6,
+        frequency: frame.channel,
         collision: frame.collision,
         group: frame.group,
         lost: frame.lost,
-        type: 'Sigfox'
-      })));
-    }
-
-    data.value = combinedData;
-    updateChart();
-  } catch (error) {
-    console.error('Erreur lors de la récupération des résultats de la simulation :', error);
+        type: 'Sigfox',
+      }))
+    );
   }
-};
 
-const updateDataZoom = (xZoomOnWheel: boolean) => {
-  if (!chartInstance) return;
-  chartInstance.setOption({
-    dataZoom: [
-      { type: 'inside', xAxisIndex: 0, zoomOnMouseWheel: xZoomOnWheel },
-      { type: 'inside', yAxisIndex: 0, zoomOnMouseWheel: 'shift' },
-    ],
-  });
-};
-
-const handleKeyDown = (event: KeyboardEvent) => {
-  if (event.key === 'Shift') {
-    updateDataZoom(false);
-  }
-};
-
-const handleKeyUp = (event: KeyboardEvent) => {
-  if (event.key === 'Shift') {
-    updateDataZoom(true);
-  }
+  return combinedData;
 };
 
 const updateChart = () => {
   if (!chartInstance) return;
 
-  // Valeurs par défaut
-  let xMin = 0;
-  let xMax = windowSize;
-  let yMin = 0;
-  let yMax = 2000;
-
-  // Si des données sont disponibles, calculez les limites réelles
+  // Calcul des bornes sur l'axe X et Y
+  let xMin = 0, xMax = windowSize, yMin = 0, yMax = 2000;
   if (data.value.length > 0) {
     const xValues = data.value.map(d => d.time);
     xMin = Math.min(...xValues);
     xMax = Math.max(...xValues);
-
     const yValues = data.value.map(d => d.frequency);
     yMin = Math.min(...yValues);
     yMax = Math.max(...yValues);
   }
-
-  // Calcul du padding de 10 % pour les axes
   const xPadding = (xMax - xMin) * 0.1;
   const yPadding = (yMax - yMin) * 0.1;
 
@@ -125,7 +114,6 @@ const updateChart = () => {
         `;
       },
     },
-    // Application du padding sur les axes
     xAxis: {
       type: 'value',
       name: 'Temps (s)',
@@ -142,7 +130,6 @@ const updateChart = () => {
       {
         type: 'inside',
         xAxisIndex: 0,
-        // La fenêtre visible initiale couvre "windowSize" secondes, avec un padding de 10 %
         startValue: xMin - xPadding,
         endValue: Math.min(xMin + windowSize + xPadding, xMax + xPadding),
         zoomOnMouseWheel: true,
@@ -163,25 +150,21 @@ const updateChart = () => {
           const collision = api.value(3);
           const mainColor = collision ? 'red' : 'blue';
 
-          // Positionnement horizontal
           const pt = api.coord([xValue, yValue]);
           const size = api.size([duration, 0]);
           const totalWidth = size[0];
-          const borderWidth = 4; // Largeur fixe pour les bords gauche et droit
+          const borderWidth = 4;
           const leftWidth = Math.min(borderWidth, totalWidth);
           const rightWidth = Math.min(borderWidth, totalWidth - leftWidth);
           const middleWidth = totalWidth - leftWidth - rightWidth;
 
-          // Modification de la hauteur au survol
           const baseHeight = 10;
           const isHovered = hoveredIndex.value === params.dataIndex;
-          const scaleFactor = isHovered ? 1.05 : 1; // Augmentation de 5 % en cas de survol
+          const scaleFactor = isHovered ? 1.05 : 1;
           const newHeight = baseHeight * scaleFactor;
-          // Centrer verticalement la trame
           const startY = pt[1] - newHeight / 2;
           const currentOpacity = isHovered ? 1 : defaultOpacity;
 
-          // Conserver l'empilement horizontal des rectangles
           const leftRect = {
             type: 'rect',
             shape: {
@@ -226,8 +209,6 @@ const updateChart = () => {
 
           return {
             type: 'group',
-            triggerEvent: true,
-            silent: false,
             children: [leftRect, middleRect, rightRect],
           };
         },
@@ -255,7 +236,6 @@ const initChart = () => {
     chartInstance = echarts.init(chartRef.value);
     updateChart();
 
-    // Attache des écouteurs d'événements pour gérer le survol
     chartInstance.on('mouseover', (params) => {
       if (params.componentType === 'series' && params.seriesType === 'custom') {
         hoveredIndex.value = params.dataIndex;
@@ -277,9 +257,56 @@ const resizeChart = () => {
   }
 };
 
+const fetchAndTransform = async () => {
+  try {
+    // Récupère les données depuis le serveur
+    await getSimulationValues(props.simulationId);
+    const results = simulationState.simulations[props.simulationId];
+    if (results) {
+      data.value = transformSimulationData(results);
+      updateChart();
+    }
+  } catch (error) {
+    console.error('Erreur lors de la récupération de la simulation:', error);
+  }
+};
+
+watch(
+  () => simulationState.simulations[props.simulationId],
+  (newVal) => {
+    if (newVal) {
+      data.value = transformSimulationData(newVal);
+      updateChart();
+    }
+  },
+  { deep: true }
+);
+
+const updateDataZoom = (xZoomOnWheel: boolean) => {
+  if (!chartInstance) return;
+  chartInstance.setOption({
+    dataZoom: [
+      { type: 'inside', xAxisIndex: 0, zoomOnMouseWheel: xZoomOnWheel },
+      { type: 'inside', yAxisIndex: 0, zoomOnMouseWheel: 'shift' },
+    ],
+  });
+};
+
+const handleKeyDown = (event: KeyboardEvent) => {
+  if (event.key === 'Shift') {
+    updateDataZoom(false);
+  }
+};
+
+const handleKeyUp = (event: KeyboardEvent) => {
+  if (event.key === 'Shift') {
+    updateDataZoom(true);
+  }
+};
+
 onMounted(() => {
   initChart();
-  fetchSimulationResults(0); // Remplacez 0 par l'ID de votre simulation
+  fetchAndTransform();
   window.addEventListener('resize', resizeChart);
   window.addEventListener('keydown', handleKeyDown);
   window.addEventListener('keyup', handleKeyUp);
@@ -288,12 +315,10 @@ onMounted(() => {
 onUnmounted(() => {
   if (chartInstance) chartInstance.dispose();
   window.removeEventListener('resize', resizeChart);
+  window.removeEventListener('keydown', handleKeyDown);
+  window.removeEventListener('keyup', handleKeyUp);
 });
 </script>
-
-<template>
-  <div ref="chartRef" class="chart-container"></div>
-</template>
 
 <style scoped>
 .chart-container {

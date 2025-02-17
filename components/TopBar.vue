@@ -8,7 +8,7 @@
 
     <!-- Partie centrale : boutons de contrôle et indicateur d'état -->
     <div class="topbar-center">
-      <UButton @click="" class="control-btn" label="Connected ?" color="white" /> <!-- {{ simulationStatus }} -->
+      <UButton @click="" class="control-btn" label={{ connectionStatus }} color="white" /> <!-- {{ simulationStatus }} -->
     </div>
 
     <!-- Partie droite : bouton mode sombre et (optionnel) bouton hamburger pour mobile -->
@@ -27,14 +27,10 @@
 <script setup lang="ts">
 import { UButton } from '#components'
 import { ref } from 'vue'
-import { useSimulationAPI } from '~/composables/useSimulationAPI'
-//import { useSimulationState } from '~/composables/useSimulationState'
+import simulationAPI from '~/composables/useSimulationAPI'
 
-// Récupération des fonctions d'API pour le contrôle de la simulation
-const { createSimulation, startSimulation, getSimulationResults } = useSimulationAPI()
-// Récupération de l'état de la simulation
-//const simulationState = useSimulationState()
-//const simulationStatus = simulationState.simulationStatus
+const connectionStatus = computed(() => simulationAPI.simulationState.connectionStatus)
+const error = computed(() => simulationAPI.simulationState.error)
 
 // Gestion du mode sombre
 const isDarkMode = ref(false)
@@ -46,25 +42,6 @@ function toggleDarkMode() {
 // Pour le menu hamburger, vous pouvez soit émettre un événement vers le layout, soit gérer une variable globale
 function toggleSidebar() {
   console.log('Toggle sidebar (mobile)')
-}
-
-let simulationID: number = 0
-function createSimulation_p() {
-  createSimulation().then(({ id }) => {
-    simulationID = id
-    console.log('Simulation created with ID:', id)
-    startSimulation(simulationID)
-  }).catch(error => {
-    console.error('Failed to create simulation:', error)
-  })
-}
-
-function getSimulationResults_p() {
-  getSimulationResults(simulationID).then(results => {
-    console.log('Simulation results:', results)
-  }).catch(error => {
-    console.error('Failed to get simulation results:', error)
-  })
 }
 </script>
 
