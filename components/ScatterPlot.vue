@@ -3,7 +3,7 @@
     <div class="checkboxes">
       <label v-for="group in availableGroups" :key="group" class="checkbox-label">
         <input type="checkbox" v-model="selectedGroups" :value="group" />
-        Groupe {{ group }}
+        Group {{ group }}
       </label>
     </div>
   </div>
@@ -32,28 +32,27 @@ const { simulationState, waitUntilSimulationFinished } = useSimulationAPI();
 const chartRef = ref<HTMLElement | null>(null);
 let chartInstance: echarts.ECharts | null = null;
 const data = ref<FrameData[]>([]);
-const windowSize = 20; // Fenêtre d'affichage en secondes
+const windowSize = 20; // Display window size in seconds
 
-// Gestion du survol dans le graphique
+// Hover management in the chart
 const hoveredIndex = ref<number | null>(null);
 const defaultOpacity = 0.6;
 
-// Gestion de la sélection des groupes via checkbox
+// Group selection management via checkboxes
 const selectedGroups = ref<number[]>([]);
 const availableGroups = computed(() => {
-  // Extrait les groupes disponibles à partir des données
+  // Extract available groups from the data
   const groups = new Set<number>();
   data.value.forEach(frame => groups.add(frame.group));
   return Array.from(groups).sort((a, b) => a - b);
 });
 
-// Dès que la liste des groupes disponibles est mise à jour, on s'assure que
-// tous les groupes soient sélectionnés par défaut (ou on complète ceux manquants)
+// Ensure all groups are selected by default when the available groups list is updated
 watch(availableGroups, (newGroups) => {
   if (selectedGroups.value.length === 0) {
     selectedGroups.value = newGroups;
   } else {
-    // Ajoute les nouveaux groupes s'ils n'étaient pas déjà sélectionnés
+    // Add new groups if they were not already selected
     newGroups.forEach(group => {
       if (!selectedGroups.value.includes(group)) {
         selectedGroups.value.push(group);
@@ -62,20 +61,20 @@ watch(availableGroups, (newGroups) => {
   }
 });
 
-// Met à jour le graphique lorsque la sélection change
+// Update the chart when the selection changes
 watch(selectedGroups, () => {
   updateChart();
 });
 
-// Transformation des données reçues depuis le serveur
+// Transform data received from the server
 const transformSimulationData = (results: any): FrameData[] => {
   const combinedData: FrameData[] = [];
 
-  // Pour LoRaWan
-  if (results.loRaWanRun && results.loRaWanFrames) {
+  // For LoRaWan
+  if (results.LoRaWanFrames) {
     combinedData.push(
-      ...results.loRaWanFrames.map((frame: any) => ({
-        time: frame.usStart / 1e6, // Conversion de microsecondes en secondes
+      ...results.LoRaWanFrames.map((frame: any) => ({
+        time: frame.usStart / 1e6, // Convert microseconds to seconds
         duration: (frame.usEnd - frame.usStart) / 1e6,
         frequency: frame.channel,
         collision: frame.collision,
@@ -86,10 +85,10 @@ const transformSimulationData = (results: any): FrameData[] => {
     );
   }
 
-  // Pour Mioty
-  if (results.miotyModelRun && results.miotyFrames) {
+  // For Mioty
+  if (results.MiotyFrames) {
     combinedData.push(
-      ...results.miotyFrames.map((frame: any) => ({
+      ...results.MiotyFrames.map((frame: any) => ({
         time: frame.usStart / 1e6,
         duration: (frame.usEnd - frame.usStart) / 1e6,
         frequency: frame.channel,
@@ -101,10 +100,10 @@ const transformSimulationData = (results: any): FrameData[] => {
     );
   }
 
-  // Pour Sigfox
-  if (results.sigfoxModelRun && results.sigfoxFrames) {
+  // For Sigfox
+  if (results.SigfoxFrames) {
     combinedData.push(
-      ...results.sigfoxFrames.map((frame: any) => ({
+      ...results.SigfoxFrames.map((frame: any) => ({
         time: frame.usStart / 1e6,
         duration: (frame.usEnd - frame.usStart) / 1e6,
         frequency: frame.channel,
@@ -122,7 +121,7 @@ const transformSimulationData = (results: any): FrameData[] => {
 const updateChart = () => {
   if (!chartInstance) return;
 
-  // Calcul des bornes sur l'axe X et Y
+  // Calculate bounds on the X and Y axes
   let xMin = 0, xMax = windowSize, yMin = 0, yMax = 2000;
   if (data.value.length > 0) {
     const yValues = data.value.map(d => d.frequency);
@@ -138,25 +137,25 @@ const updateChart = () => {
       formatter: (params) => {
         const frame = params.data;
         return `
-          <b>Temps :</b> ${frame[0]} s<br/>
-          <b>Fréquence :</b> ${frame[1]} Hz<br/>
-          <b>Durée :</b> ${frame[2]} s<br/>
-          <b>Collision :</b> ${frame[3] ? "Oui" : "Non"}<br/>
-          <b>Groupe :</b> ${frame[4]}<br/>
-          <b>Perte :</b> ${frame[5] ? "Oui" : "Non"}<br/>
-          <b>Type :</b> ${frame[6]}
+          <b>Time:</b> ${frame[0]} s<br/>
+          <b>Frequency:</b> ${frame[1]} Hz<br/>
+          <b>Duration:</b> ${frame[2]} s<br/>
+          <b>Collision:</b> ${frame[3] ? "Yes" : "No"}<br/>
+          <b>Group:</b> ${frame[4]}<br/>
+          <b>Lost:</b> ${frame[5] ? "Yes" : "No"}<br/>
+          <b>Type:</b> ${frame[6]}
         `;
       },
     },
     xAxis: {
       type: 'value',
-      name: 'Temps (s)',
+      name: 'Time (s)',
       min: xMin - xPadding,
       max: xMax + xPadding,
     },
     yAxis: {
       type: 'value',
-      name: 'Fréquence (Hz)',
+      name: 'Frequency (Hz)',
       min: yMin - yPadding,
       max: yMax + yPadding,
     },
@@ -251,7 +250,7 @@ const updateChart = () => {
           y: 'frequency',
           tooltip: ['time', 'frequency', 'duration', 'collision', 'group', 'lost', 'type'],
         },
-        // On filtre les données selon la sélection des groupes
+        // Filter data based on group selection
         data: data.value
           .filter(d => selectedGroups.value.includes(d.group))
           .map((d) => [
@@ -283,12 +282,12 @@ const resizeChart = () => {
 
 const fetchAndTransform = async () => {
   try {
-    // Attend que la simulation soit terminée
+    // Wait for the simulation to finish
     const results = await waitUntilSimulationFinished(props.simulationId);
     data.value = transformSimulationData(results);
     updateChart();
   } catch (error) {
-    console.error('Erreur lors de la récupération de la simulation:', error);
+    console.error('Error fetching simulation data:', error);
   }
 };
 
@@ -347,7 +346,7 @@ onUnmounted(() => {
   height: 100%;
 }
 
-/* Style pour les cases à cocher */
+/* Style for checkboxes */
 .checkboxes {
   margin-top: 10px;
   text-align: center;

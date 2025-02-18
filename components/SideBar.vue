@@ -124,7 +124,7 @@ function runSimulation_p(id: number) {
     simulationMessagePerSecond: sim.parameters.simulationMessagePerSecond,
     MiotyModelRun: sim.parameters.model === 'Mioty',
     SigfoxModelRun: sim.parameters.model === 'Sigfox',
-    LoRaWanRun: sim.parameters.model === 'LoRaWan'
+    LoRaWanModelRun: sim.parameters.model === 'LoRaWan'
   }
 
   // Call the set_parameters endpoint to update the parameters
@@ -171,7 +171,6 @@ const models = ['Mioty', 'Sigfox', 'LoRaWan']
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem;
-  background-color: #f5f5f5;
   cursor: pointer;
 }
 .simulation-body {
