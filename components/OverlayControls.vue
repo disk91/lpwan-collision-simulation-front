@@ -1,10 +1,10 @@
 <template>
     <div class="overlay-controls">
-        <!-- Pourcentage de paquets perdus -->
+        <!-- Percentage of lost packets -->
         <div class="packet-loss">
             Packet Loss: {{ packetLoss }}%
         </div>
-        <!-- Bouton pour le mode plein écran -->
+        <!-- Button for fullscreen mode -->
         <UButtonGroup>
             <!-- <UButton icon="i-mdi-info" @click="" class="btn-export" /> Focus sidebar item -->
             <UButton icon="i-mdi-delete" @click="_deleteSimulation" class="btn-delete" color="red" />
@@ -33,7 +33,7 @@ const packetLoss = computed(() => {
 const isFullScreen = ref(false)
 
 function toggleFullScreen() {
-    // Trouve le bon conteneur en fonction de l'ID
+    // Find the correct container based on the ID
     const fullScreenContainer = document.querySelector(`.simulation-container[data-id="${props.simulationId}"]`)
     if (!fullScreenContainer) return
 
@@ -80,7 +80,7 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     gap: 10px;
-    /* Par défaut, les overlay controls sont invisibles */
+    /* By default, overlay controls are invisible */
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
@@ -94,7 +94,7 @@ onUnmounted(() => {
     font-weight: bold;
 }
 
-/* Règles pour que l'overlay apparaisse lors du survol du conteneur */
+/* Rules to make the overlay appear when hovering over the container */
 .simulation-container:hover .overlay-controls {
     opacity: 1;
     pointer-events: auto;

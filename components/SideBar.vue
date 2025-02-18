@@ -1,28 +1,28 @@
 <template>
   <aside class="sidebar">
-    <!-- Bouton pour ajouter une nouvelle simulation -->
+    <!-- Button to add a new simulation -->
     <div class="header">
       <UButton @click="addSimulation" class="new-simulation-btn">
         New Simulation
       </UButton>
     </div>
 
-    <!-- Liste des simulations -->
+    <!-- List of simulations -->
     <div v-for="sim in localSimulations" :key="sim.id" class="simulation-item">
-      <!-- En-tête cliquable pour ouvrir/fermer le panneau -->
+      <!-- Clickable header to open/close the panel -->
       <div class="simulation-header" @click="toggleSimulation(sim.id)">
         <h3>{{ simulationAPI.simulationState.simulationsTitle[sim.id] }}</h3>
         <UIcon :name="sim.isOpen ? 'chevron-up' : 'chevron-down'" />
       </div>
 
-      <!-- Corps du panneau -->
+      <!-- Panel body -->
       <div v-if="sim.isOpen" class="simulation-body">
-        <!-- Message de chargement pendant la simulation -->
+        <!-- Loading message during simulation -->
         <div v-if="sim.loading" class="loading">
           <p>Running simulation...</p>
         </div>
 
-        <!-- Formulaire de paramètres -->
+        <!-- Parameters form -->
         <form v-else @submit.prevent="runSimulation_p(sim.id)">
           <div class="form-group">
             <label>Model</label>
@@ -85,7 +85,7 @@ const updateLocalSimulations = () => {
   })
 }
 
-// Initialisation et synchronisation avec le store
+// Initialization and synchronization with the store
 updateLocalSimulations()
 watch(() => simulationAPI.simulationState.simulationIds, updateLocalSimulations)
 watch(() => simulationAPI.simulationState.simulationsTitle, updateLocalSimulations)
@@ -119,7 +119,7 @@ function runSimulation_p(id: number) {
 
   sim.loading = true
 
-  // Construire l'objet de paramètres en fonction du modèle choisi
+  // Build the parameters object based on the selected model
   const parameters = {
     simulationMessagePerSecond: sim.parameters.simulationMessagePerSecond,
     MiotyModelRun: sim.parameters.model === 'Mioty',
@@ -127,10 +127,10 @@ function runSimulation_p(id: number) {
     LoRaWanRun: sim.parameters.model === 'LoRaWan'
   }
 
-  // Appel à l'endpoint set_parameters pour mettre à jour les paramètres
+  // Call the set_parameters endpoint to update the parameters
   simulationAPI.setSimulationParameters(id, parameters)
     .then(() => {
-      // Une fois les paramètres mis à jour, lancer la simulation
+      // Once the parameters are updated, run the simulation
       return simulationAPI.runSimulation(id)
     })
     .then(() => {
