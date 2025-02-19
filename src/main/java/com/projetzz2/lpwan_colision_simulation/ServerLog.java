@@ -12,4 +12,9 @@ public class ServerLog {
         System.out.println("[" + dateHeureActuelle.format(formater) + "]  " + msg);
     }
 
+    static public void printErrorLog(String msg){
+        LocalDateTime dateHeureActuelle = LocalDateTime.now();
+        System.err.println("[" + dateHeureActuelle.format(formater) + "]  " + msg);
+    }
+
 }

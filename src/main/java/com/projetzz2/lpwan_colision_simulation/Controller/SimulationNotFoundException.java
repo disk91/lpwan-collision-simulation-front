@@ -1,13 +1,17 @@
 package com.projetzz2.lpwan_colision_simulation.Controller;
 
+import com.projetzz2.lpwan_colision_simulation.Simulation.SimulationId;
+
 public class SimulationNotFoundException extends RuntimeException {
 
-    public SimulationNotFoundException(String message) {
-        super(message);
+    private SimulationId id;
+
+    public SimulationNotFoundException(SimulationId id) {
+        super("{\"Unknown id\": " + id +"}");
+        this.id = id;
     }
 
-    // Tu peux aussi ajouter d'autres constructeurs si nécessaire, par exemple :
-    public SimulationNotFoundException(String message, Throwable cause) {
-        super(message, cause);
+    public SimulationId getSimulationId(){
+        return id;
     }
 }

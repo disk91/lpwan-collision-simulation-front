@@ -27,7 +27,7 @@ public class SimulationServerController {
         boolean idChecked = allSimulations.containsKey(id);
 
         if(!idChecked){
-            throw new SimulationNotFoundException("{\n  \"Unknown id\": " + id + "\n}");
+            throw new SimulationNotFoundException(id);
         }
 
         return idChecked;
