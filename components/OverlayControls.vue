@@ -2,7 +2,7 @@
     <div class="overlay-controls">
         <!-- Percentage of lost packets -->
         <div class="packet-loss">
-            Packet Loss: {{ packetLoss }}%
+            Collision Rate : {{ collisionRate }}% <!-- | Packet Loss: {{ packetLoss }}% -->
         </div>
         <!-- Button for fullscreen mode -->
         <UButtonGroup>
@@ -22,7 +22,19 @@ import { useSimulationAPI } from '~/composables/useSimulationAPI'
 const props = defineProps<{ simulationId: number }>()
 const { simulationState, deleteSimulation } = useSimulationAPI()
 
-const packetLoss = computed(() => {
+// const packetLoss = computed(() => {
+//     const simulation = simulationState.simulations[props.simulationId];
+//     if (simulation && simulation.totalFrames > 0) {
+//         // Calculate the percentage of by counting the number of lost packets
+//         const lostPackets = simulation.MiotyFrames.filter(frame => frame.lost).length +
+//                     simulation.SigfoxFrames.filter(frame => frame.lost).length +
+//                     simulation.LoRaWanFrames.filter(frame => frame.lost).length;
+//         return ((lostPackets * 100.0) / simulation.totalFrames).toFixed(2);
+//     }
+//     return '0.00';
+// });
+
+const collisionRate = computed(() => {
     const simulation = simulationState.simulations[props.simulationId];
     if (simulation && simulation.totalFrames > 0) {
         return (simulation.totalCollisions * 100.0 / simulation.totalFrames).toFixed(2);

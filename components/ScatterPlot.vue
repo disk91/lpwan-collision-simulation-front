@@ -1,10 +1,8 @@
 <template>
-  <div>
+  <div class="checkboxes-container">
     <div class="checkboxes">
-      <label v-for="group in availableGroups" :key="group" class="checkbox-label">
-        <input type="checkbox" v-model="selectedGroups" :value="group" />
-        Group {{ group }}
-      </label>
+      <UCheckbox v-for="group in availableGroups" :key="group" v-model="selectedGroups" :value="group"
+        :label="`Group ${group}`" class="checkbox-label" />
     </div>
   </div>
   <div ref="chartRef" class="chart-container"></div>
@@ -181,7 +179,28 @@ const updateChart = () => {
           const yValue = api.value(1);
           const duration = api.value(2);
           const collision = api.value(3);
-          const mainColor = collision ? 'red' : 'blue';
+          const lost = api.value(5);
+
+          // Définition des couleurs selon les conditions
+          let computedMainColor = '';
+          let computedBorderColor = '';
+          if (lost) {
+            if (collision) {
+              computedMainColor = 'lightsalmon';
+              computedBorderColor = 'darkred';
+            } else {
+              computedMainColor = 'grey';
+              computedBorderColor = 'black';
+            }
+          } else {
+            if (collision) {
+              computedMainColor = 'violet';
+              computedBorderColor = 'darkviolet';
+            } else {
+              computedMainColor = 'lightgreen';
+              computedBorderColor = 'darkgreen';
+            }
+          }
 
           const pt = api.coord([xValue, yValue]);
           const size = api.size([duration, 0]);
@@ -207,7 +226,7 @@ const updateChart = () => {
               height: newHeight,
             },
             style: {
-              fill: 'green',
+              fill: computedBorderColor,
               opacity: currentOpacity,
             },
           };
@@ -221,7 +240,7 @@ const updateChart = () => {
               height: newHeight,
             },
             style: {
-              fill: mainColor,
+              fill: computedMainColor,
               opacity: currentOpacity,
             },
           };
@@ -235,7 +254,7 @@ const updateChart = () => {
               height: newHeight,
             },
             style: {
-              fill: 'yellow',
+              fill: computedBorderColor,
               opacity: currentOpacity,
             },
           };
@@ -346,14 +365,18 @@ onUnmounted(() => {
   height: 100%;
 }
 
-/* Style for checkboxes */
-.checkboxes {
-  margin-top: 10px;
-  text-align: center;
+.checkboxes-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
 }
 
-.checkbox-label {
-  margin-right: 15px;
-  font-size: 14px;
+.checkboxes {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 15px;
+  align-items: center;
+  overflow-x: auto;
+  white-space: nowrap;
 }
 </style>
