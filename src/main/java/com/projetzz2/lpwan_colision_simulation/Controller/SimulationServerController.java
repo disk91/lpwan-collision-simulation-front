@@ -1,14 +1,19 @@
 package com.projetzz2.lpwan_colision_simulation.Controller;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.*;
+import io.swagger.v3.oas.annotations.media.*;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
+import com.projetzz2.lpwan_colision_simulation.ServerLog;
 import com.projetzz2.lpwan_colision_simulation.Simulation.SimulationConnecter;
+import com.projetzz2.lpwan_colision_simulation.Simulation.SimulationId;
+import com.projetzz2.lpwan_colision_simulation.Simulation.SimulationInput;
 import com.projetzz2.lpwan_colision_simulation.Simulation.lpwan_collision_simulation.src.FrameModel;
 
 @RestController
@@ -16,108 +21,170 @@ import com.projetzz2.lpwan_colision_simulation.Simulation.lpwan_collision_simula
 @CrossOrigin(origins = "http://localhost:3000")
 public class SimulationServerController {
     
-    private Map<Integer, SimulationConnecter> allSimulations = new HashMap<>();
-    private int lastId = 0;
-    private LocalDateTime dateHeureActuelle = LocalDateTime.now();
-    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+    private Map<SimulationId, SimulationConnecter> allSimulations = new HashMap<>();
 
-    private void printLogTime(){
-        dateHeureActuelle = LocalDateTime.now();
-        System.out.print("[" + dateHeureActuelle.format(formatter) + "]");
+    private boolean checkMapId(SimulationId id){
+        boolean idChecked = allSimulations.containsKey(id);
+
+        if(!idChecked){
+            throw new SimulationNotFoundException("{\n  \"Unknown id\": " + id + "\n}");
+        }
+
+        return idChecked;
     }
 
+    @Operation(summary = "Create a new simulation with the informations put in input and return the id of the simulation",
+            description = "Create the simulation and put it inside a map with an id that is given in the output",
+            responses = {
+                @ApiResponse(responseCode = "200", description = "Creating simulation", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = SimulationId.class)))})
     @PostMapping("/new")
-    public String createSimulation(@RequestBody SimulationConnecter simu){
+    public SimulationId createSimulation(
+        @Parameter(required = true, name = "simuInput", description = "Parameters of the simulation")
+        @RequestBody SimulationInput simuInput){
+        
+        SimulationId id = new SimulationId();
+        ServerLog.printLog("Creating simulation: " + id.getId());
+        
+        allSimulations.put(id, new SimulationConnecter(simuInput));
+        System.out.println(simuInput);
 
-        System.out.println("Nombre de msg/s: " + simu.getSimulationMessagePerSecond() + ", LoRaWan Run: " + simu.isLoRaWanRun()+ ", Mioty Run: " + simu.isMiotyModelRun() + ", Sigfox Run: " + simu.isSigfoxModelRun());
-        printLogTime();
-        System.out.println("  -  Creating simulation " + lastId);
-
-        simu.setSimulationRunning(false);
-        simu.setLoRaWanFrames(new ArrayList<FrameModel>());
-        simu.setMiotyFrames(new ArrayList<FrameModel>());
-        simu.setSigfoxFrames(new ArrayList<FrameModel>());
-        allSimulations.put(lastId, simu);
-        lastId++;
-
-        return "{\n  \"id\": " + (lastId-1) + "\n}";
+        return id;
     }
 
+    @Operation(summary = "Get the values of a simulation",
+            description = "Give the values of the simulation that has the id put in the path",
+            responses = {
+                @ApiResponse(responseCode = "200", description = "Getting simulation values", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = SimulationConnecter.class))),
+                @ApiResponse(responseCode = "404", description = "id not found", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"Unknown id\": 150}")))})
     @GetMapping("/get_values/{id}")
-    public SimulationConnecter getSimulationStatues(@PathVariable int id){
-        printLogTime();
-        System.out.println("  -  Getting values of simulation " + id);
+    public SimulationConnecter getSimulationStatues(
+        @Parameter(required = true, name = "id", description = "Id of the simulation")
+        @PathVariable SimulationId id){
+        
+        ServerLog.printLog("Getting values of simulation: " + id);
+        SimulationConnecter simu = null;
+        if(checkMapId(id)){
+            simu = allSimulations.get(id);
+            System.out.println(simu.getInput());
+        }
 
-        return allSimulations.get(id);
+        return simu;
     }
 
+    @Operation(summary = "Change the input of the of the simulation and replace it by the one given in the body",
+            description = "Take the new input of the simulation in the body and put it instead of the old values of the simulation",
+            responses = {
+                @ApiResponse(responseCode = "200", description = "Setting simulation parameters", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = SimulationConnecter.class))),
+                @ApiResponse(responseCode = "404", description = "id not found", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"Unknown id\": 150}")))})
     @PostMapping("/set_parameters/{id}")
-    public SimulationConnecter changeParameters(@PathVariable int id, @RequestBody SimulationConnecter simu){
-        System.out.println("Nombre de msg/s: " + simu.getSimulationMessagePerSecond() + ", LoRaWan Run: " + simu.isLoRaWanRun()+ ", Mioty Run: " + simu.isMiotyModelRun() + ", Sigfox Run: " + simu.isSigfoxModelRun());
-        printLogTime();
-        System.out.println("  -  Changing parameters of simulation " + id);
+    public SimulationConnecter changeParameters(
+        @Parameter(required = true, name = "id", description = "Id of the simulation")
+        @PathVariable SimulationId id,
+        @Parameter(required = true, name = "simuInput", description = "Parameters of the simulation")
+        @RequestBody SimulationInput simuInput){
 
-        SimulationConnecter curSimu = allSimulations.get(id);
-        curSimu.freeSimulation();
+        ServerLog.printLog("Changing parameters of simulation: " + id);
+        System.out.println(simuInput);
 
-        curSimu.setSimulationRunning(false);
-        curSimu.setLoRaWanFrames(new ArrayList<FrameModel>());
-        curSimu.setMiotyFrames(new ArrayList<FrameModel>());
-        curSimu.setSigfoxFrames(new ArrayList<FrameModel>());
-        curSimu.setLoRaWanRun(simu.isLoRaWanRun());
-        curSimu.setMiotyModelRun(simu.isMiotyModelRun());
-        curSimu.setSigfoxModelRun(simu.isSigfoxModelRun());
-        curSimu.setSimulationMessagePerSecond(simu.getSimulationMessagePerSecond());
+        SimulationConnecter curSimu = null;
+
+        if(checkMapId(id)){
+            curSimu = allSimulations.get(id);
+            curSimu.freeSimulation();
+            curSimu.setLoRaWanFrames(new ArrayList<FrameModel>());
+            curSimu.setMiotyFrames(new ArrayList<FrameModel>());
+            curSimu.setSigfoxFrames(new ArrayList<FrameModel>());
+            curSimu.setInput(simuInput);
+        }
 
         return curSimu;
     }
 
+    @Operation(summary = "Delete the simulation of the id in the path",
+            description = "Free the simulation that has the same id as the one in the path and remove it from the map of all the simulations",
+            responses = {
+                @ApiResponse(responseCode = "200", description = "Deleting simulation", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = SimulationId.class))),
+                @ApiResponse(responseCode = "404", description = "id not found", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorResponse.class),
+                    examples = @ExampleObject(value = "{\"Unknown id\": 150}")))})
     @PostMapping("/delete/{id}")
-    public String removeSimulation(@PathVariable int id){
-        printLogTime();
-        System.out.println("  -  Deleting simulation " + id);
+    public SimulationId removeSimulation(
+        @Parameter(required = true, name = "id", description = "Id of the simulation")
+        @PathVariable SimulationId id){
 
-        allSimulations.get(id).freeSimulation();
-        allSimulations.remove(id);
+        ServerLog.printLog("Deleting simulation: " + id);
 
-        return "{\n  \"Running deleted\": " + id + "\n}";
-    }
-
-
-
-    @PostMapping("/run/{id}")
-    public String runSimulation(@PathVariable int id){
-        printLogTime();
-        System.out.println("  -  Running simulation " + id);
-
-        allSimulations.get(id).simulationRun();
-        return "{\n  \"Running simulation\": " + id + "\n}";
-    }
-
-    @GetMapping("/get_ids")
-    public String getAllSimulations(){
-        printLogTime();
-        System.out.println("  -  Request all id from server");
-
-        String out = "{\n  \"id\": [";
-        int i=0, mapSize = allSimulations.size();
-        for (Integer key : allSimulations.keySet()) {
-            out +=  key;
-            if(i < mapSize-1){
-                out += ", ";
-            }
-
-            i++;
+        if(checkMapId(id)){
+            allSimulations.get(id).freeSimulation();
+            allSimulations.remove(id);
         }
 
-        out += "]\n}";
-        return out;
+        return id;
     }
 
+
+    @Operation(summary = "Create a new simulation with the informations put in input and return the id of the simulation",
+            description = "Create the simulation and put it inside a map with an id that is given in the output",
+            responses = {
+                @ApiResponse(responseCode = "200", description = "Running simulation", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = SimulationId.class))),
+                @ApiResponse(responseCode = "404", description = "id not found", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = SimulationNotFoundException.class),
+                    examples = @ExampleObject(value = "{\"Unknown id\": 150}")))})
+    @PostMapping("/run/{id}")
+    public SimulationId runSimulation(
+        @Parameter(required = true, name = "id", description = "Id of the simulation")
+        @PathVariable SimulationId id){
+        
+        ServerLog.printLog("Running simulation: " + id);
+
+        if(checkMapId(id)){
+            allSimulations.get(id).simulationRun();
+        }
+        
+        return id;
+    }
+
+    @Operation(summary = "Return all the id that are currently available",
+            description = "Give all of the id that currently present inside of the map of all the simulations",
+            responses = 
+                @ApiResponse(responseCode = "200", description = "All id", content = @Content(
+                    mediaType = "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = SimulationId.class)))))
+    @GetMapping("/get_ids")
+    public SimulationId[] getAllSimulations(){
+        ServerLog.printLog("Request all id from server");
+
+        return allSimulations.keySet().toArray(new SimulationId[0]);
+    }
+
+    @Operation(summary = "Pring the server",
+            description = "Ping the server",
+            responses = 
+                @ApiResponse(responseCode = "200", description = "Ping", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = Void.class),
+                    examples = @ExampleObject(value = "{}"))))
     @GetMapping("/ping")
     public String pingBack(){
-        printLogTime();
-        System.out.println("  -  Ping Server");
+        //ServerLog.printLog("Ping Server");
         return "{}";
     }
 }

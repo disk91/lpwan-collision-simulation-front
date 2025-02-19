@@ -2,118 +2,68 @@ package com.projetzz2.lpwan_colision_simulation.Simulation;
 
 import java.util.ArrayList;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.projetzz2.lpwan_colision_simulation.Simulation.lpwan_collision_simulation.src.*;
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 
-@JsonAutoDetect(fieldVisibility = Visibility.ANY)
+
 public class SimulationConnecter extends ModelRunner{
 
-    private boolean simulationRunning = false;
-    private int simulationMessagePerSecond;
 
-    private boolean MiotyModelRun;
+    private boolean simulationRunning = false;
+    private SimulationInput input;
+    
+
     private ArrayList<FrameModel> MiotyFrames = new ArrayList<FrameModel>();
-    private boolean SigfoxModelRun;
     private ArrayList<FrameModel> SigfoxFrames = new ArrayList<FrameModel>();
-    private boolean LoRaWanRun;
     private ArrayList<FrameModel> LoRaWanFrames = new ArrayList<FrameModel>();
 
-    SimulationConnecter(){
-        simulationMessagePerSecond = 2;
-        MiotyModelRun = true;
-        SigfoxModelRun = true;
-        LoRaWanRun = true;
+    public SimulationConnecter(SimulationInput input){
+        this.input = input;
     }
 
+    @JsonProperty("simulationRunning")
     public boolean isSimulationRunning() {
         return simulationRunning;
     }
-
 
 
     public void setSimulationRunning(boolean simulationRunning) {
         this.simulationRunning = simulationRunning;
     }
 
-
-
-    public int getSimulationMessagePerSecond() {
-        return simulationMessagePerSecond;
+    @JsonProperty("input")
+    public SimulationInput getInput() {
+        return input;
     }
 
-
-
-    public void setSimulationMessagePerSecond(int simulationMessagePerSecond) {
-        this.simulationMessagePerSecond = simulationMessagePerSecond;
+    public void setInput(SimulationInput input) {
+        this.input = input;
     }
 
-
-
-    public boolean isMiotyModelRun() {
-        return MiotyModelRun;
-    }
-
-
-
-    public void setMiotyModelRun(boolean miotyModelRun) {
-        MiotyModelRun = miotyModelRun;
-    }
-
-
-
+    @JsonProperty("MiotyFrames")
     public ArrayList<FrameModel> getMiotyFrames() {
         return MiotyFrames;
     }
-
 
 
     public void setMiotyFrames(ArrayList<FrameModel> miotyFrames) {
         MiotyFrames = miotyFrames;
     }
 
-
-
-    public boolean isSigfoxModelRun() {
-        return SigfoxModelRun;
-    }
-
-
-
-    public void setSigfoxModelRun(boolean sigfoxModelRun) {
-        SigfoxModelRun = sigfoxModelRun;
-    }
-
-
-
+    @JsonProperty("SigfoxFrames")
     public ArrayList<FrameModel> getSigfoxFrames() {
         return SigfoxFrames;
     }
-
 
 
     public void setSigfoxFrames(ArrayList<FrameModel> sigfoxFrames) {
         SigfoxFrames = sigfoxFrames;
     }
 
-
-
-    public boolean isLoRaWanRun() {
-        return LoRaWanRun;
-    }
-
-
-
-    public void setLoRaWanRun(boolean loRaWanRun) {
-        LoRaWanRun = loRaWanRun;
-    }
-
-
-
+    @JsonProperty("LoRaWanFrames")
     public ArrayList<FrameModel> getLoRaWanFrames() {
         return LoRaWanFrames;
     }
-
 
 
     public void setLoRaWanFrames(ArrayList<FrameModel> loRaWanFrames) {
@@ -138,27 +88,27 @@ public class SimulationConnecter extends ModelRunner{
         RadioModel s = new SigfoxModel();
         RadioModel l = new LoRaWanModel();
 
-        if(MiotyModelRun){
+        if(input.isMiotyModelRun()){
             // Run Mioty
             MiotyFrames.clear();
-            System.out.println("Running Mioty with " + this.simulationMessagePerSecond + "msg/s");
-            MiotyFrames = runStep(r, this.simulationMessagePerSecond);
+            System.out.println("Running Mioty with " + input.getSimulationMessagePerSecond() + "msg/s");
+            MiotyFrames = runStep(r, input.getSimulationMessagePerSecond() );
             removeHeadFrameModel(MiotyFrames);
         }
 
-        if(SigfoxModelRun){
+        if(input.isSigfoxModelRun()){
             // Run sigfox
             SigfoxFrames.clear();
-            System.out.println("Running Sigfox with " + this.simulationMessagePerSecond + "msg/s");
-            SigfoxFrames = runStep(s, this.simulationMessagePerSecond);
+            System.out.println("Running Sigfox with " + input.getSimulationMessagePerSecond()  + "msg/s");
+            SigfoxFrames = runStep(s, input.getSimulationMessagePerSecond() );
             removeHeadFrameModel(SigfoxFrames);
         }
 
-        if(LoRaWanRun){
+        if(input.isLoRaWanModelRun()){
             // Run LoRaWan
             LoRaWanFrames.clear();
-            System.out.println("Running LoRaWan with " + this.simulationMessagePerSecond + "msg/s");
-            LoRaWanFrames = runStep(l, this.simulationMessagePerSecond);
+            System.out.println("Running LoRaWan with " + input.getSimulationMessagePerSecond()  + "msg/s");
+            LoRaWanFrames = runStep(l, input.getSimulationMessagePerSecond() );
             removeHeadFrameModel(LoRaWanFrames);
         }
         

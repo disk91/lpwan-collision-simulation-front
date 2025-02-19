@@ -8,6 +8,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(SimulationNotFoundException.class)
+    public ResponseEntity<String> handleSimulationNotFound(SimulationNotFoundException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception ex) {
         ex.printStackTrace();  // Affiche la trace de l'erreur dans la console
