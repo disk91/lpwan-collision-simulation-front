@@ -27,8 +27,6 @@ watch(simulationIds, () => {
 }, { deep: true })
 
 onMounted(async () => {
-  await getSimulationIds()
-
   // Démarrer le ping toutes les 2 secondes
   const pingInterval = setInterval(async () => {
     try {
