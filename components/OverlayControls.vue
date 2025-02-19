@@ -2,7 +2,7 @@
     <div class="overlay-controls">
         <!-- Percentage of lost packets -->
         <div class="packet-loss">
-            Collision Rate : {{ collisionRate }}% <!-- | Packet Loss: {{ packetLoss }}% -->
+            Lost msg : {{ collisionRate }}% <!-- | Packet Loss: {{ packetLoss }}%  Name is broken -->
         </div>
         <!-- Button for fullscreen mode -->
         <UButtonGroup>
