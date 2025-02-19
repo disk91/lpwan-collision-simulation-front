@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, defineProps } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import * as echarts from 'echarts';
 import { useSimulationAPI } from '~/composables/useSimulationAPI';
 

@@ -1,13 +1,11 @@
 <template>
-  <ClientOnly fallback-tag="span" fallback="Loading graphs...">
-    <div :key="containerKey" class="simulations">
-      <div class="simulation-container" v-for="id in simulationIds" :key="`sim-${id}`" :data-id="id">
-        <ScatterPlot :simulation-id="id" />
-        <OverlayControls :simulation-id="id" />
-        <OverlayTitle :title="simulationState.simulationsTitle[id]" />
-      </div>
+  <div :key="containerKey" class="simulations">
+    <div class="simulation-container" v-for="id in simulationIds" :key="`sim-${id}`" :data-id="id">
+      <ScatterPlot :simulation-id="id" />
+      <OverlayControls :simulation-id="id" />
+      <OverlayTitle :title="simulationState.simulationsTitle[id]" />
     </div>
-  </ClientOnly>
+  </div>
 </template>
 
 <script setup lang="ts">

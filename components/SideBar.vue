@@ -12,7 +12,7 @@
       <!-- Clickable header to open/close the panel -->
       <div class="simulation-header" @click="toggleSimulation(sim.id)">
         <h3>{{ simulationAPI.simulationState.simulationsTitle[sim.id] }}</h3>
-        <UIcon :name="sim.isOpen ? 'chevron-up' : 'chevron-down'" />
+        <UIcon :name="sim.isOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
       </div>
 
       <!-- Panel body -->

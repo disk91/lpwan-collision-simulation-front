@@ -98,7 +98,6 @@ async function runSimulation(simulationId: number) {
 
     // Polling every 1 second to update the simulation
     const interval = setInterval(async () => {
-      console.log("Polling simulation...");
       try {
         const simulationData = await getSimulationValues(simulationId);
         if (!simulationData.simulationRunning) { // Stop polling when the simulation is finished
@@ -242,7 +241,7 @@ async function deleteSimulation(simulationId: number) {
 }
 
 function waitUntilSimulationFinished(simulationId: number): Promise<SimulationModel> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const checkInterval = setInterval(() => {
       const simulation = simulationState.simulations[simulationId];
       if (simulation) {
@@ -252,7 +251,6 @@ function waitUntilSimulationFinished(simulationId: number): Promise<SimulationMo
         }
       } else {
         clearInterval(checkInterval);
-        reject(new Error(`Simulation with ID ${simulationId} not found`));
       }
     }, 100); // Check every 0.1 seconds
   });
