@@ -35,7 +35,7 @@
              return Math.random();
          }
          // Generate a random integer, take its absolute value, convert to double, and normalize it.
-         return (double)Math.abs(generator.nextInt()) / Integer.MAX_VALUE;
+         return (double)Math.abs(generator.nextInt()) / ((double)Integer.MAX_VALUE + 1.);
      }
  }
  
