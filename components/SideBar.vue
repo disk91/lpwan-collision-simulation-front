@@ -55,12 +55,50 @@
         </form>
       </div>
     </div>
+
+    <!-- Captions for the graph -->
+    <div class="legend">
+      <h3>Caption</h3>
+      <div class="legend-item">
+        <label>Lost & Collide</label>
+        <input type="color" v-model="chartColors.lostCollisionMain"/>
+      </div>
+      <div class="legend-item">
+        <label>Lost & Collide border</label>
+        <input type="color" v-model="chartColors.lostCollisionBorder"/>
+      </div>
+      <div class="legend-item">
+        <label>Only Lost</label>
+        <input type="color" v-model="chartColors.lostNoCollisionMain"/>
+      </div>
+      <div class="legend-item">
+        <label>Only Lost border</label>
+        <input type="color" v-model="chartColors.lostNoCollisionBorder"/>
+      </div>
+      <div class="legend-item">
+        <label>Only Collision</label>
+        <input type="color" v-model="chartColors.notLostCollisionMain"/>
+      </div>
+      <div class="legend-item">
+        <label>Only Collision border</label>
+        <input type="color" v-model="chartColors.notLostCollisionBorder"/>
+      </div>
+      <div class="legend-item">
+        <label>Safe</label>
+        <input type="color" v-model="chartColors.notLostNoCollisionMain"/>
+      </div>
+      <div class="legend-item">
+        <label>Safe Border</label>
+        <input type="color" v-model="chartColors.notLostNoCollisionBorder"/>
+      </div>
+    </div>
   </aside>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import simulationAPI from '~/composables/useSimulationAPI'
+import { chartColors } from '~/composables/useChartColors'
 
 interface LocalSimulation {
   id: number
@@ -207,5 +245,29 @@ input[type="range"] {
   align-items: center;
   justify-content: center;
   height: 100px;
+}
+</style>
+
+<style scoped>
+.legend {
+  margin-top: 1rem;
+  padding: 0.5rem;
+  border-top: 1px solid #ddd;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.legend-item label {
+  flex: 1;
+  font-size: 0.9rem;
+}
+.legend-item input[type="color"] {
+  width: 40px;
+  height: 30px;
+  border: none;
+  padding: 0;
+  background: none;
 }
 </style>

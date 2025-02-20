@@ -12,6 +12,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import * as echarts from 'echarts';
 import { useSimulationAPI } from '~/composables/useSimulationAPI';
+import { chartColors } from '~/composables/useChartColors';
 
 interface FrameData {
   time: number;
@@ -181,26 +182,27 @@ const updateChart = () => {
           const collision = api.value(3);
           const lost = api.value(5);
 
-          // Définition des couleurs selon les conditions
           let computedMainColor = '';
           let computedBorderColor = '';
+
           if (lost) {
             if (collision) {
-              computedMainColor = 'lightsalmon';
-              computedBorderColor = 'darkred';
+              computedMainColor = chartColors.lostCollisionMain;
+              computedBorderColor = chartColors.lostCollisionBorder;
             } else {
-              computedMainColor = 'grey';
-              computedBorderColor = 'black';
+              computedMainColor = chartColors.lostNoCollisionMain;
+              computedBorderColor = chartColors.lostNoCollisionBorder;
             }
           } else {
             if (collision) {
-              computedMainColor = 'violet';
-              computedBorderColor = 'darkviolet';
+              computedMainColor = chartColors.notLostCollisionMain;
+              computedBorderColor = chartColors.notLostCollisionBorder;
             } else {
-              computedMainColor = 'lightgreen';
-              computedBorderColor = 'darkgreen';
+              computedMainColor = chartColors.notLostNoCollisionMain;
+              computedBorderColor = chartColors.notLostNoCollisionBorder;
             }
           }
+
 
           const pt = api.coord([xValue, yValue]);
           const size = api.size([duration, 0]);
@@ -261,7 +263,23 @@ const updateChart = () => {
 
           return {
             type: 'group',
-            children: [leftRect, middleRect, rightRect],
+            children: [
+              {
+                type: 'rect',
+                shape: { x: pt[0], y: pt[1] - 5, width: size[0] * 0.2, height: 10 },
+                style: { fill: computedBorderColor, opacity: defaultOpacity },
+              },
+              {
+                type: 'rect',
+                shape: { x: pt[0] + size[0] * 0.2, y: pt[1] - 5, width: size[0] * 0.6, height: 10 },
+                style: { fill: computedMainColor, opacity: defaultOpacity },
+              },
+              {
+                type: 'rect',
+                shape: { x: pt[0] + size[0] * 0.8, y: pt[1] - 5, width: size[0] * 0.2, height: 10 },
+                style: { fill: computedBorderColor, opacity: defaultOpacity },
+              }
+            ]
           };
         },
         encode: {
@@ -320,6 +338,11 @@ watch(
   },
   { deep: true }
 );
+
+// Watch graph colors and update the chart
+watch(chartColors, () => {
+  updateChart();
+});
 
 const updateDataZoom = (xZoomOnWheel: boolean) => {
   if (!chartInstance) return;

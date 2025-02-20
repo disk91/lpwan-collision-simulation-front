@@ -14,7 +14,6 @@ defineProps<{ title: string }>()
   position: absolute;
   top: 10px;
   left: 10px;
-  background-color: rgba(255, 255, 255, 0.8);
   padding: 5px 10px;
   border-radius: 4px;
   font-weight: bold;
