@@ -265,7 +265,7 @@
                  
                  if (channel >= 0 && channel <= 1920) {
                      // Calculate frequency for Sigfox channels.
-                     int frequency = 868034000 + 100000 * channel;
+                     int frequency = 868034000 + 100 * channel;
                      fmNext.setChannel(frequency);
                  }
  
