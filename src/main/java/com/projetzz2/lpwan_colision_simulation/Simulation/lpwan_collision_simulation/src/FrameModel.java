@@ -31,12 +31,21 @@ public class FrameModel {
     public void markWholeFrameLost() {
         FrameModel f = this.getHead();
         do {
-            f.setCollision(true);
+            //f.setCollision(true);
             f.setLost(true);
             f = f.getNext();
         } while ( f != null );
     }
 
+
+    public void markWholeFrameLostAndCollide(){
+        FrameModel f = this.getHead();
+        do {
+            f.setCollision(true);
+            f.setLost(true);
+            f = f.getNext();
+        } while ( f != null );
+    }
 
     // ---
 

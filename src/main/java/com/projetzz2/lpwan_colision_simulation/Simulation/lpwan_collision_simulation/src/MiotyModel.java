@@ -2,6 +2,8 @@ package com.projetzz2.lpwan_colision_simulation.Simulation.lpwan_collision_simul
 
 import java.util.ArrayList;
 
+import com.projetzz2.lpwan_colision_simulation.RandomGeneratorSimu;
+
 public class MiotyModel extends RadioModel {
 
     public static class MiotyPattern {
@@ -56,9 +58,9 @@ public MiotyModel(int mode) {
     public ArrayList<FrameModel> getFrameModel(long startUs) {
         // pattern selection and freq shift are based on CRC as a pseudo random generator
         // here we use a random value, should be equivalent
-        int pattern = (int) Math.floor(Math.random() * 8);          // random pattern selection
-        int fOffset = (int) Math.floor(Math.random() * 11) - 5;     // the best condition is +/-5 shift
-        int bank =(Math.random() > 0.5 && mode == MODE_EU1)?40:0;   // randomly select the bank for EU1 (2x100KHz)
+        int pattern = (int) Math.floor(RandomGeneratorSimu.random() * 8);          // random pattern selection
+        int fOffset = (int) Math.floor(RandomGeneratorSimu.random() * 11) - 5;     // the best condition is +/-5 shift
+        int bank =(RandomGeneratorSimu.random() > 0.5 && mode == MODE_EU1)?40:0;   // randomly select the bank for EU1 (2x100KHz)
         ArrayList<FrameModel> r = new ArrayList<>();
         long _startUs = startUs;
         FrameModel previous = null;
@@ -92,7 +94,7 @@ public MiotyModel(int mode) {
     public void collisionTest(FrameModel f1, FrameModel f2) {
         // same one, exiting
         if ( f1 == f2 ) return;
-        if ( f1.isLost() && f2.isLost() ) return; // nothing more to compute
+        //if ( f1.isLost() && f2.isLost() ) return; // nothing more to compute
 
         // Not on the same frequency
         if ( f1.getChannel() != f2.getChannel() ) return;
@@ -107,14 +109,13 @@ public MiotyModel(int mode) {
         if ( f1.getGroup() == f2.getGroup() ) {
             if ( f1.getHead().getChannel() == f2.getHead().getChannel() ) {
                 // global collision happen, mark the whole frame lost
-                f1.markWholeFrameLost();
-                f2.markWholeFrameLost();
+                f1.markWholeFrameLostAndCollide();
+                f2.markWholeFrameLostAndCollide();
             }
-        } else {
-            // different pattern but same frequency, mark the split in collision
-            f1.setCollision(true);
-            f2.setCollision(true);
         }
+        
+        f1.setCollision(true);
+        f2.setCollision(true);
 
     }
 

@@ -2,6 +2,8 @@ package com.projetzz2.lpwan_colision_simulation.Simulation.lpwan_collision_simul
 
 import java.util.ArrayList;
 
+import com.projetzz2.lpwan_colision_simulation.RandomGeneratorSimu;
+
 public class LoRaWanModel extends RadioModel {
 
     // distribution of the different SF over the frame sent
@@ -32,7 +34,7 @@ public class LoRaWanModel extends RadioModel {
         FrameModel head = null;
 
         // Calculate a SF for this frame
-        int tof = (int) Math.floor(Math.random() * 99.99); // %age to SF "type of frame"
+        int tof = (int) Math.floor(RandomGeneratorSimu.random() * 99.99); // %age to SF "type of frame"
         int sf = -1; // SF7
         while (tof >= 0 && sf < sfDistribution.length ) {
             sf++;
@@ -56,7 +58,7 @@ public class LoRaWanModel extends RadioModel {
             fm.setUsEnd(startUs + frameDurationBySFuS[sf]);
 
             // 8 channels
-            int channel = (int) Math.floor(Math.random() * 7.99); // 8 values
+            int channel = (int) Math.floor(RandomGeneratorSimu.random() * 7.99); // 8 values
             fm.setChannel(channel);
             // SF is used as multiple sf on same frequency does not collision
             fm.setGroup(sf);
@@ -103,7 +105,7 @@ public class LoRaWanModel extends RadioModel {
         } while ( h != null );
         if ( col == frag ) {
             // all repeat collisionned
-            f.markWholeFrameLost();
+            f.markWholeFrameLostAndCollide();
             return false;
         }
         return true; // viable frame

@@ -2,6 +2,8 @@ package com.projetzz2.lpwan_colision_simulation.Simulation.lpwan_collision_simul
 
 import java.util.ArrayList;
 
+import com.projetzz2.lpwan_colision_simulation.RandomGeneratorSimu;
+
 public class ModelRunner {
 
     protected static final long RUN_DURATION_S = 20;        // duration of the test in second
@@ -47,7 +49,7 @@ public class ModelRunner {
         // Generate 10x more frame per second on a 10s time range
         for ( int i = 0 ; i < messagesPerSecond * 10 ; i++ ) {
             // get a starting time in us
-            long start = (long)Math.floor(Math.random()*RUN_DURATION_S*1_000_000);
+            long start = (long)Math.floor(RandomGeneratorSimu.random()*RUN_DURATION_S*1_000_000);
             // Generate the frames
             ArrayList<FrameModel> fms = r.getFrameModel(start);
             for ( FrameModel fm : fms ) {

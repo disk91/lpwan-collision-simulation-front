@@ -2,6 +2,8 @@ package com.projetzz2.lpwan_colision_simulation.Simulation.lpwan_collision_simul
 
 import java.util.ArrayList;
 
+import com.projetzz2.lpwan_colision_simulation.RandomGeneratorSimu;
+
 public class SigfoxModel extends RadioModel {
     @Override
     public ArrayList<FrameModel> getFrameModel(long startUs) {
@@ -15,7 +17,7 @@ public class SigfoxModel extends RadioModel {
             // the reality is a random freq calculated by the device in the 192KHz
             // the collision is detected with 300Hz margin so it's basically equivalent
             // to 1920 different channel and collision on the adjacent channels.
-            int channel = (int) Math.floor(Math.random() * 1920);
+            int channel = (int) Math.floor(RandomGeneratorSimu.random() * 1920);
             FrameModel fm = new FrameModel();
             // link the fragments
             if ( head == null ) head = fm;
@@ -73,7 +75,7 @@ public class SigfoxModel extends RadioModel {
         } while ( h != null );
         if ( col == frag ) {
             // all repeat collisionned
-            f.markWholeFrameLost();
+            f.markWholeFrameLostAndCollide();
             return false;
         }
         return true; // viable frame
