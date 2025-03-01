@@ -279,7 +279,6 @@
       * Uses a predefined array of EU frequencies to set the channel frequency based on the channel index.
       */
      private void updateLoRaWanFrequencies() {
-         int EUFrequencies[] = {868100000, 868300000, 868500000, 867100000, 867300000, 867500000, 867700000, 867900000};
  
          for (FrameModel fm : LoRaWanFrames) {
              FrameModel fmNext = fm;
@@ -287,8 +286,8 @@
                  int channel = fmNext.getChannel();
  
                  if (channel >= 0 && channel <= 7) {
-                     // Update the channel frequency using the predefined EU frequencies.
-                     int frequency = EUFrequencies[fmNext.getChannel()];
+                     // Calculate frequency for LoRaWan channels.
+                     int frequency = 867100000 + 200000 * fmNext.getChannel();
                      fmNext.setChannel(frequency);
                  }
                  

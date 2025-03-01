@@ -250,7 +250,7 @@
       *
       * @return A simple empty JSON object as a string.
       */
-     @Operation(summary = "Pring the server",
+     @Operation(summary = "Ping the server",
              description = "Ping the server",
              responses = 
                  @ApiResponse(responseCode = "200", description = "Ping", content = @Content(
