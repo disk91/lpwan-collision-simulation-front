@@ -1,7 +1,7 @@
 <template>
   <div :key="containerKey" class="simulations">
     <div class="simulation-container" v-for="id in simulationIds" :key="`sim-${id}`" :data-id="id">
-      <ScatterPlot :simulation-id="id" />
+      <WaterFall :simulation-id="id" />
       <OverlayControls :simulation-id="id" />
       <OverlayTitle :title="simulationState.simulationsTitle[id]" />
     </div>
@@ -11,10 +11,10 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { useSimulationAPI } from '~/composables/useSimulationAPI'
-import ScatterPlot from '~/components/ScatterPlot.vue'
 import OverlayTitle from '~/components/OverlayTitle.vue'
 import OverlayControls from '~/components/OverlayControls.vue'
 import { computed } from 'vue'
+import WaterFall from '~/components/WaterFall.vue'
 
 const { simulationState, getSimulationIds, pingServer } = useSimulationAPI()
 const simulationIds = computed(() => simulationState.simulationIds)
