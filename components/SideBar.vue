@@ -35,7 +35,7 @@
 
           <div class="form-group">
             <label>Messages / s</label>
-            <input type="range" v-model="sim.parameters.simulationMessagePerSecond" min="1" max="200" />
+            <input type="range" v-model="sim.parameters.simulationMessagePerSecond" min="1" max="250" />
             <span>{{ sim.parameters.simulationMessagePerSecond }}</span>
           </div>
 
