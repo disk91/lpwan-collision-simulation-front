@@ -34,11 +34,6 @@
           </div>
 
           <div class="form-group">
-            <label>Graph color</label>
-            <input type="color" v-model="sim.parameters.color" />
-          </div>
-
-          <div class="form-group">
             <label>Messages / s</label>
             <input type="range" v-model="sim.parameters.simulationMessagePerSecond" min="1" max="200" />
             <span>{{ sim.parameters.simulationMessagePerSecond }}</span>
@@ -105,7 +100,7 @@ interface LocalSimulation {
   isOpen: boolean
   loading: boolean
   ran: boolean
-  parameters: { model: string | null; color: string; simulationMessagePerSecond: number }
+  parameters: { model: string | null; simulationMessagePerSecond: number }
 }
 
 const localSimulations = ref<LocalSimulation[]>([])
@@ -118,7 +113,7 @@ const updateLocalSimulations = () => {
       isOpen: false,
       loading: false,
       ran: false,
-      parameters: { model: "Mioty", color: '#000000', simulationMessagePerSecond: 10 }
+      parameters: { model: "Mioty", simulationMessagePerSecond: 10 }
     }
   })
 }
