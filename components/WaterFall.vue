@@ -172,6 +172,7 @@ const updateChart = () => {
         zoomOnMouseWheel: 'shift',
       },
     ],
+    animation: false,
     series: [
       {
         type: 'custom',
