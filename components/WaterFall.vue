@@ -264,21 +264,9 @@ const updateChart = () => {
           return {
             type: 'group',
             children: [
-              {
-                type: 'rect',
-                shape: { x: pt[0], y: pt[1] - 5, width: size[0] * 0.2, height: 10 },
-                style: { fill: computedBorderColor, opacity: defaultOpacity },
-              },
-              {
-                type: 'rect',
-                shape: { x: pt[0] + size[0] * 0.2, y: pt[1] - 5, width: size[0] * 0.6, height: 10 },
-                style: { fill: computedMainColor, opacity: defaultOpacity },
-              },
-              {
-                type: 'rect',
-                shape: { x: pt[0] + size[0] * 0.8, y: pt[1] - 5, width: size[0] * 0.2, height: 10 },
-                style: { fill: computedBorderColor, opacity: defaultOpacity },
-              }
+              leftRect,
+              middleRect,
+              rightRect,
             ]
           };
         },
