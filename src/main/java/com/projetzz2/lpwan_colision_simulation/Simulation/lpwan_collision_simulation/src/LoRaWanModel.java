@@ -35,7 +35,7 @@ public class LoRaWanModel extends RadioModel {
 
         // Calculate a SF for this frame
         int tof = (int) Math.floor(RandomGeneratorSimu.random() * 99.99); // %age to SF "type of frame"
-        int sf = -1; // SF7
+        int sf = -1; // initially SF7 so ++ gives 0
         while (tof >= 0 && sf < sfDistribution.length ) {
             sf++;
             tof -= sfDistribution[sf];
@@ -64,7 +64,7 @@ public class LoRaWanModel extends RadioModel {
             fm.setGroup(sf);
             r.add(fm);
             previous = fm;
-            startUs = startUs + frameDurationBySFuS[sf] + (2_000_000); // transmission time + 1000ms interframe
+            startUs = startUs + frameDurationBySFuS[sf] + (2_500_000); // transmission time + 2500ms interframe (RX1 + RX2)
         }
         return r;
     }
