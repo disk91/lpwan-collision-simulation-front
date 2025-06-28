@@ -6,6 +6,15 @@ import com.projetzz2.lpwan_colision_simulation.RandomGeneratorSimu;
 
 public class MiotyModel extends RadioModel {
 
+    /*
+     * The carrier spacing step size  of the standard TSMA mode used for one 100 kHz channel shall be 2 380,371 Hz. The
+     * carrier spacing accuracy shall be ±5,0 Hz across all radio-bursts within one radio-frame.
+     * If two radio channels A and B are used, the frame transmissions shall be alternated between the two channels. The
+     * channel to be used for transmission shall be derived from the least significant bit of the payload CRC according to
+     * Table 6
+     */
+    public final static int SPACING_STEP = 2380; // Hz
+
     public static class MiotyPattern {
         int refChannel;     // reference channel
         long timeDiff;      // time diff from previous packet in ms
@@ -58,8 +67,8 @@ public MiotyModel(int mode) {
     public ArrayList<FrameModel> getFrameModel(long startUs) {
         // pattern selection and freq shift are based on CRC as a pseudo random generator
         // here we use a random value, should be equivalent
-        int pattern = (int) Math.floor(RandomGeneratorSimu.random() * 8);          // random pattern selection
-        int fOffset = (int) Math.floor(RandomGeneratorSimu.random() * 11) - 5;     // the best condition is +/-5 shift
+        int pattern = (int) Math.floor(RandomGeneratorSimu.random() * 7.99);          // random pattern selection
+        int fOffset = (int) Math.floor(RandomGeneratorSimu.random() * 10.99) - 5;     // the best condition is +/-5 shift
         int bank =(RandomGeneratorSimu.random() > 0.5 && mode == MODE_EU1)?40:0;   // randomly select the bank for EU1 (2x100KHz)
         ArrayList<FrameModel> r = new ArrayList<>();
         long _startUs = startUs;
