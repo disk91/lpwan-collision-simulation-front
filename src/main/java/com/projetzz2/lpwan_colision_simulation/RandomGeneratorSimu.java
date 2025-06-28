@@ -16,10 +16,12 @@
  public class RandomGeneratorSimu {
      
      // A custom Random generator initialized with a fixed seed for reproducible random numbers.
+     // This will make sense if we reinit on every run, otherwise it will always generate the same sequence.
+     // This can be n option for the simulation later, better to be purely random now.
      private static Random generator = new Random(998877665544332215L);
      
      // Flag to decide whether to use Math.random() or the custom Random generator.
-     private static boolean randomMath = false;
+     private static boolean randomMath = true;
  
      /**
       * Generates a random double value in the range [0, 1).
