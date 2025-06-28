@@ -139,8 +139,8 @@ public MiotyModel(int mode) {
             frag++;
             h = h.getNext();
         } while ( h != null );
-        if ( 3 * col > frag ) {
-            // >=1/3 split collisioned, impossible to reconstruct
+        if ( col >= (2 * frag)/3 ) {
+            // >=2/3 split in collision, impossible to reconstruct
             f.markWholeFrameLost();
             return false;
         }

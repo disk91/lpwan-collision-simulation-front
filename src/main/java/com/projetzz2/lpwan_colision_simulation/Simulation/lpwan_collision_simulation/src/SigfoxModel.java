@@ -74,7 +74,7 @@ public class SigfoxModel extends RadioModel {
             h = h.getNext();
         } while ( h != null );
         if ( col == frag ) {
-            // all repeat collisionned
+            // all repeat collisioned
             f.markWholeFrameLostAndCollide();
             return false;
         }
