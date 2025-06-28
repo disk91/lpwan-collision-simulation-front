@@ -231,18 +231,21 @@
                  int channel = fmNext.getChannel();
  
                  if (MiotyMode == MiotyModel.MODE_EU0 && channel >= -5 && channel <= 28) {
-                     // Calculate frequency for MODE_EU0.
-                     int frequency = (channel - 12) * 100000 + 868180000;
+                     // Calculate frequency for MODE_EU0 => center is 868.18MHz
+                     // Channel size is 2.5KHz
+                     int frequency = (channel - 12) * 2500 + 868180000;
                      fmNext.setChannel(frequency);
                  } else if (MiotyMode == MiotyModel.MODE_EU1 && channel >= -5 && channel <= 68) {
                      int frequency = 0;
- 
+
+                     // The frequancy band depends on the channel group, in EU1 we used channel over 40 (minus offset delta)
+                     // to separate the two bands
                      if (channel < 30) {
                          // Calculate frequency for lower channel values in MODE_EU1.
-                         frequency = (channel - 12) * 200000 + 868180000;
+                         frequency = (channel - 12) * 2500 + 868180000;
                      } else {
                          // Calculate frequency for higher channel values in MODE_EU1.
-                         frequency = (channel - 12 - 40) * 200000 + 868080000;
+                         frequency = (channel - 12 - 40) * 2500 + 868080000;
                      }
  
                      fmNext.setChannel(frequency);
