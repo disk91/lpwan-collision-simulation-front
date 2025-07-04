@@ -139,8 +139,10 @@ public MiotyModel(int mode) {
             frag++;
             h = h.getNext();
         } while ( h != null );
-        if ( col >= (2 * frag)/3 ) {
-            // >=2/3 split in collision, impossible to reconstruct
+        if ( col >= (1 * frag)/2 ) {
+            // >=2/3 burst in collision, impossible to reconstruct due to the triplication of data
+            // but based on discussion with Mioty, with 50% of burst loss the concentrator will not
+            // be able to detect the pattern
             f.markWholeFrameLost();
             return false;
         }
